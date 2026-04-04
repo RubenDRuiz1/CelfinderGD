@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Historial Solicitudes Vendedor')}"></head>
+<body style="background:#f8f9fa; min-height:100vh; display:flex; flex-direction:column;">
+
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="container" style="max-width:1000px; margin:20px auto; padding:20px; flex:1;">
+    <h1 class="fw-bold text-primary mb-4">
+        <i class="fas fa-history me-2"></i>Historial de Solicitudes de Vendedor
+    </h1>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-striped table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Fecha de Solicitud</th>
+                        <th>Estado</th>
+                        <th>Comentario del Administrador</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="solicitud : ${solicitudes}">
+                        <td><code th:text="${solicitud.id}"></code></td>
+                        <td th:text="${solicitud.fechaSolicitud != null ? #temporals.format(solicitud.fechaSolicitud, 'dd/MM/yyyy HH:mm') : 'No disponible'}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${solicitud.estado == 'autorizada' ? 'bg-success' : solicitud.estado == 'rechazada' ? 'bg-danger' : 'bg-warning text-dark'}"
+                                  th:text="${solicitud.estado}"></span>
+                        </td>
+                        <td th:text="${solicitud.comentarioAdmin ?: 'Ninguno'}"></td>
+                    </tr>
+                    <tr th:if="${#lists.isEmpty(solicitudes)}">
+                        <td colspan="4" class="text-center text-muted py-4">No hay solicitudes registradas.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+        <a th:href="@{/ventas/listar}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Listado
+        </a>
+        <a th:href="@{/admin/solicitar-vendedor}" class="btn btn-primary">
+            <i class="fas fa-plus me-2"></i>Nueva Solicitud
+        </a>
+    </div>
+</main>
+
+<footer style="text-align:center; padding:20px; background:#2c3e50; color:white; margin-top:auto;">
+    <div>
+        <p>© 2025 CellFinder TechMatch</p>
+        <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+        <p>Teléfono: +57 3126409354 | Email: edderespitia@gmail.com</p>
+        <p>Integrantes: Edder Espitia y Ruben Ruiz</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+</body>
+</html>

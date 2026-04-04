@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Historial de Ventas')}"></head>
+<body>
+
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="container" style="max-width:1100px; margin:30px auto; padding:20px;">
+    <h1 class="text-center mb-5 text-primary fw-bold">
+        <i class="fas fa-chart-line me-2"></i>Historial de Ventas
+    </h1>
+
+    <div th:if="${error}" class="alert alert-danger text-center" th:text="${error}"></div>
+    <div th:if="${mensaje}" class="alert alert-success text-center" th:text="${mensaje}"></div>
+
+    <!-- Vacío -->
+    <div th:if="${historial == null or historial.isEmpty()}" class="text-center py-5">
+        <i class="fas fa-store-slash fa-4x text-muted mb-3"></i>
+        <p class="text-muted fs-3">No tienes ventas en tu historial.</p>
+        <a th:href="@{/ventas/listar}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store me-2"></i>Ir al Mercado
+        </a>
+    </div>
+
+    <!-- Lista de ventas -->
+    <div th:each="item : ${historial}" class="card mb-4 shadow-sm">
+        <div class="row g-0">
+            <div class="col-md-3 d-flex align-items-center justify-content-center bg-light p-3">
+                <img th:if="${item.containsKey('imagenBase64') and item.imagenBase64 != null and item.imagenBase64 != ''}"
+                     th:src="@{'data:image/jpeg;base64,' + ${item.imagenBase64}}"
+                     class="img-fluid rounded" style="max-height:130px; object-fit:cover;">
+                <div th:unless="${item.containsKey('imagenBase64') and item.imagenBase64 != null and item.imagenBase64 != ''}"
+                     class="text-muted text-center">
+                    <i class="fas fa-image fa-3x"></i><br><small>Sin imagen</small>
+                </div>
+            </div>
+            <div class="col-md-9">
+                <div class="card-body">
+                    <h4 class="card-title fw-bold" th:text="${item.solicitud.nombreProducto ?: 'Producto sin nombre'}"></h4>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Comprador:</strong>
+                                <span th:text="${item.containsKey('nombreComprador') ? item.nombreComprador : (item.solicitud.nombreComprador ?: 'Anónimo')}"></span>
+                            </p>
+                            <p class="mb-1"><strong>Correo:</strong>
+                                <span th:text="${item.solicitud.correoComprador ?: 'No disponible'}"></span>
+                            </p>
+                            <p class="mb-1"><strong>Teléfono:</strong>
+                                <span th:text="${item.solicitud.numeroContactoComprador ?: 'No disponible'}"></span>
+                            </p>
+                            <p class="mb-1"><strong>Dirección:</strong>
+                                <span th:text="${item.solicitud.direccionComprador ?: 'No especificada'}"></span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-1"><strong>Estado solicitud:</strong>
+                                <span class="badge"
+                                      th:classappend="${item.solicitud.estado == 'autorizada' ? 'bg-success' : item.solicitud.estado == 'rechazada' ? 'bg-danger' : 'bg-warning text-dark'}"
+                                      th:text="${item.solicitud.estado}"></span>
+                            </p>
+                            <p class="mb-1"><strong>Precio:</strong>
+                                <strong class="text-success" th:text="${item.containsKey('precio') ? '$' + item.precio : 'No disponible'}"></strong>
+                            </p>
+                            <p class="mb-1"><strong>Fecha:</strong>
+                                <span th:text="${item.solicitud.fechaSolicitud != null ? #temporals.format(item.solicitud.fechaSolicitud, 'dd/MM/yyyy HH:mm') : 'Sin fecha'}"></span>
+                            </p>
+
+                            <!-- Estado de envío -->
+                            <div th:if="${item.solicitud.estadoSeguimiento != null}" class="mb-2">
+                                <strong>Estado envío:</strong>
+                                <span class="badge ms-1"
+                                      th:classappend="${item.solicitud.estadoSeguimiento == 'ENTREGADO' ? 'bg-success' :
+                                                        item.solicitud.estadoSeguimiento == 'ENVIADO' ? 'bg-info' :
+                                                        item.solicitud.estadoSeguimiento == 'PREPARANDO' ? 'bg-warning text-dark' : 'bg-secondary'}"
+                                      th:text="${item.solicitud.estadoSeguimiento}">PENDIENTE</span>
+                            </div>
+
+                            <!-- Botones -->
+                            <div class="d-flex gap-2 mt-2 flex-wrap">
+                                <a th:href="@{/ventas/chat-pedido/{id}(id=${item.solicitud.id})}"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-comments me-1"></i>Chat con comprador
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p th:if="${item.solicitud.descripcionVendedor != null and item.solicitud.descripcionVendedor != ''}"
+                       class="mt-2">
+                        <strong>Tu comentario:</strong> <em th:text="${item.solicitud.descripcionVendedor}"></em>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    <div th:if="${historial != null and !historial.isEmpty()}" class="text-center mt-5">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/ventas/historial-ventas(page=${currentPage - 1}, size=${pageSize})}">Anterior</a>
+            </li>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <li class="page-item" th:classappend="${i == currentPage} ? 'active'">
+                    <a class="page-link" th:href="@{/ventas/historial-ventas(page=${i}, size=${pageSize})}" th:text="${i + 1}"></a>
+                </li>
+            </th:block>
+            <li class="page-item" th:classappend="${currentPage == totalPages - 1 or totalPages == 0} ? 'disabled'">
+                <a class="page-link" th:href="@{/ventas/historial-ventas(page=${currentPage + 1}, size=${pageSize})}">Siguiente</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="text-center mt-4 d-flex gap-3 justify-content-center">
+        <a th:href="@{/ventas/listar}" class="btn btn-secondary btn-lg">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Mercado
+        </a>
+        <a th:href="@{/ventas/gestionar-solicitudes}" class="btn btn-primary btn-lg">
+            <i class="fas fa-tasks me-2"></i>Gestionar Solicitudes
+        </a>
+    </div>
+</main>
+
+<footer style="text-align:center; padding:20px; background:#2c3e50; color:white; margin-top:auto;">
+    <div>
+        <p>© 2025 CellFinder TechMatch</p>
+        <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+        <p>Teléfono: +57 3126409354 | Email: edderespitia@gmail.com</p>
+        <p>Integrantes: Edder Espitia y Ruben Ruiz</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+</body>
+</html>

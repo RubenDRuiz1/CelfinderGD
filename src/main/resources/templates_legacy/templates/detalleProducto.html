@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${producto.nombre} ?: 'Detalles del Producto'"></title>
+    <link rel="icon" href="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo.png?raw=true" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .logo-container img {
+            height: 70px;
+            width: auto;
+            transition: transform 0.3s;
+        }
+        .logo-container:hover img {
+            transform: scale(1.05);
+        }
+        .menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu li a, .user-btn {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .menu li a:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .user-btn {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-btn:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .user-btn img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 200px;
+            z-index: 1000;
+            text-align: left;
+        }
+        .user-dropdown.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        .user-dropdown a, .user-dropdown button {
+            display: block;
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .user-dropdown a:hover, .user-dropdown button:hover {
+            background-color: #f0f0f0;
+        }
+        .user-dropdown button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+        .logout-box {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            z-index: 1001;
+            text-align: center;
+        }
+        .logout-box.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logout-box p {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .logout-box button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-box .yes-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .logout-box .yes-btn:hover {
+            background-color: #c0392b;
+        }
+        .logout-box .no-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .logout-box .no-btn:hover {
+            background-color: #2980b9;
+        }
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+        .product-img {
+            max-width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .product-img:hover {
+            transform: scale(1.05);
+        }
+        .specifications, .similar-products, .reviews-section {
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .action-buttons .btn {
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: transform 0.3s;
+        }
+        .action-buttons .btn:hover {
+            transform: translateY(-2px);
+        }
+        .similar-product-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .similar-product-item:last-child {
+            border-bottom: none;
+        }
+        .review-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 10px;
+        }
+        .review-item:last-child {
+            border-bottom: none;
+        }
+        .review-form {
+            margin-top: 15px;
+        }
+        .review-form textarea {
+            resize: vertical;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            margin-top: 30px;
+        }
+        .footer-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        .form-control {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        .editable-field {
+            display: none;
+        }
+        .edit-mode .editable-field {
+            display: inline-block;
+            width: 100%;
+        }
+        .edit-mode .view-field {
+            display: none;
+        }
+        #chat-button { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+        #chat-button:hover { transform: scale(1.15); }
+        #chat-button img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        #chat-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9998; }
+        #chat-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 700px; height: 85%; background: white; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.4); overflow: hidden; flex-direction: column; z-index: 10000; }
+        #close-chat { position: absolute; top: 12px; right: 12px; background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; z-index: 10001; }
+        #close-chat:hover { background: #c82333; }
+        #chat-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .chat-input { display: flex; padding: 15px; background: #f8f9fa; border-top: 1px solid #ddd; gap: 10px; }
+        .chat-input input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 50px; font-size: 16px; }
+        .chat-input button { padding: 12px 20px; background: #3498db; color: white; border: none; border-radius: 50px; cursor: pointer; }
+        .chat-input button:hover { background: #2980b9; }
+        @media (max-width: 768px) { .profile { width: 180px; } }
+        @media (max-width: 480px) { .profile { width: 150px; padding: 15px; } }
+    
+
+
+        /* Reseñas - estilo horizontal y carga dinámica */
+        .reviews-section {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-top: 60px;
+        }
+        .review-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 25px;
+            transition: all 0.3s;
+            height: 100%;
+        }
+        .review-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        .stars { color: #ffc107; font-size: 1.3rem; }
+        .verified-badge { background: #28a745; color: white; font-size: 0.8rem; padding: 6px 12px; border-radius: 20px; }
+        .vote-btn { background: none; border: none; font-size: 1.4rem; cursor: pointer; transition: all 0.3s; }
+        .vote-btn:hover { transform: scale(1.3); }
+        .load-more-btn { background: #3498db; color: white; border: none; padding: 15px 50px; font-size: 1.2rem; border-radius: 50px; }
+        .load-more-btn:hover { background: #2980b9; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo%20nombre.png?raw=true" alt="Logo CellFinder" class="logo">
+        </div>
+
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/ventas/listar">Mercado</a></li>
+                <li class="user-menu">
+                    <button id="username-btn" class="user-btn">
+                        <img id="profile-img" src="https://via.placeholder.com/30" alt="Profile Image">
+                        <span>Cargando...</span>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <button onclick="location.href='/usuarios/perfil'">Ver Perfil</button>
+                        <button onclick="location.href='/ventas/notificaciones'">Notificaciones</button>
+                        <button id="logout-option">Cerrar Sesión</button>
+                    </div>
+                    <div class="logout-box" id="logout-box">
+                        <p>¿Estás seguro de cerrar sesión?</p>
+                        <button class="yes-btn">Sí</button>
+                        <button class="no-btn">No</button>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="row">
+            <!-- Columna izquierda: Detalles del producto (70%) -->
+            <div class="col-md-8">
+                <h1>Detalles del Producto</h1>
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+                <form th:action="@{/ventas/editar/{id}(id=${producto.id})}" method="post" th:object="${producto}" enctype="multipart/form-data" id="editForm">
+                    <div th:classappend="${userId != null and (userId == producto.vendedorId or userRoles.contains('ROLE_ADMIN'))} ? 'editable' : ''">
+                        <h2>
+                            <span class="view-field" th:text="*{nombre} ?: 'Sin nombre'"></span>
+                            <input type="text" class="form-control editable-field" id="nombre" th:field="*{nombre}" required>
+                        </h2>
+
+                        <img th:if="*{imagenBase64}" th:src="@{'data:image/jpeg;base64,' + *{imagenBase64}}" class="product-img" alt="Imagen del producto">
+                        <img th:unless="*{imagenBase64}" src="https://via.placeholder.com/300x200" class="product-img" alt="Sin imagen">
+
+                        <div class="editable-field">
+                            <label for="imagen">Cambiar imagen</label>
+                            <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
+                        </div>
+
+                        <p><strong>Marca:</strong>
+                            <span class="view-field" th:text="*{marca} ?: 'No especificado'"></span>
+                            <input type="text" class="form-control editable-field" th:field="*{marca}">
+                        </p>
+
+                        <p><strong>Categoría:</strong>
+                            <span class="view-field" th:text="*{categoria} ?: 'No especificado'"></span>
+                            <select class="form-control editable-field" th:field="*{categoria}">
+                                <option value="Celular">Celular</option>
+                                <option value="Tablet">Tablet</option>
+                                <option value="Portatil">Portátil</option>
+                                <option value="Torre">Torre</option>
+                                <option value="Lavadora">Lavadora</option>
+                                <option value="Nevera">Nevera</option>
+                                <option value="Microondas">Microondas</option>
+                                <option value="Estufa">Estufa</option>
+                                <option value="Aspiradora">Aspiradora</option>
+                            </select>
+                        </p>
+
+                        <p><strong>Precio:</strong>
+                            <span class="view-field" th:text="'$' + ${producto.precio != null ? #numbers.formatDecimal(producto.precio, 1, 2) : '0.00'}"></span>
+                            <input type="number" step="0.01" class="form-control editable-field" id="precio" th:field="*{precio}" required>
+                        </p>
+
+                        <p><strong>Estado de Venta:</strong>
+                            <span class="view-field" th:text="*{estadoVenta} ?: 'No especificado'"></span>
+                        </p>
+
+                        <p><strong>Descripción:</strong>
+                            <span class="view-field" th:text="*{descripcion} ?: 'Sin descripción'"></span>
+                            <textarea class="form-control editable-field" id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+                        </p>
+
+                        <p><strong>Fecha de Publicación:</strong>
+                            <span th:text="${producto.fechaPublicacion != null ? #temporals.format(producto.fechaPublicacion, 'dd/MM/yyyy HH:mm') : 'No disponible'}"></span>
+                        </p>
+
+                        <p><strong>Publicado por:</strong>
+                            <span th:text="${nombreVendedor} ?: 'Vendedor desconocido'"></span>
+                        </p>
+                    </div>
+
+                    <div class="action-buttons mt-4">
+                        <!-- BOTÓN DE COMPRA CORREGIDO -->
+                        <a th:href="@{/ventas/solicitar/{id}(id=${producto.id})}" 
+                           class="btn btn-success btn-lg px-5 py-3"
+                           th:if="${producto.estadoVenta == 'disponible'}"
+                           th:unless="${userId != null and userId == producto.vendedorId}">
+                           <i class="fas fa-shopping-cart me-2"></i> Comprar Ahora
+                        </a>
+
+                        <!-- Edición -->
+                        <button type="button" class="btn btn-warning" id="editToggleBtn"
+                                th:if="${userId != null and (userId == producto.vendedorId or userRoles.contains('ROLE_ADMIN'))}">Editar Producto</button>
+                        <div class="edit-controls" style="display: none;">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <button type="button" class="btn btn-secondary" id="cancelBtn">Cancelar</button>
+                        </div>
+
+                        <!-- Eliminación -->
+                        <form th:action="@{/ventas/eliminar/{id}(id=${producto.id})}" method="post" style="display: inline;">
+                            <button type="submit" class="btn btn-danger" onclick="return confirm('¿Estás seguro de eliminar este producto?')"
+                                    th:if="${userId != null and (userId == producto.vendedorId or userRoles.contains('ROLE_ADMIN'))}">
+                                Eliminar Producto
+                            </button>
+                        </form>
+
+                        <a th:href="@{/ventas/seleccionar-comparacion/{id}(id=${producto.id})}" class="btn btn-primary mt-3">Comparar con otro</a>
+                        <a th:href="@{/ventas/comparar-media/{id}(id=${producto.id})}" class="btn btn-primary mt-2">Comparar con Media</a>
+                        <a th:href="@{/ventas/listar}" class="btn btn-secondary mt-3">Volver al Listado</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Columna derecha: Similares y Reseñas (30%) -->
+            <div class="col-md-4">
+                <div class="similar-products">
+                    <h3>Productos Similares</h3>
+                    <div th:if="${similares == null or similares.empty}">
+                        <p>No hay productos similares.</p>
+                    </div>
+                    <div th:each="similar : ${similares}" class="similar-product-item">
+                        <h4 th:text="${similar.nombre}"></h4>
+                        <p><strong>Precio:</strong> <span th:text="'$' + ${similar.precio != null ? #numbers.formatDecimal(similar.precio, 1, 2) : '0.00'}"></span></p>
+                        <p><strong>Categoría:</strong> <span th:text="${similar.categoria}"></span></p>
+                        <p><strong>Publicado por:</strong> <span th:text="${nombresVendedores[similar.id]}"></span></p>
+                        <a th:href="@{/ventas/detalle/{id}(id=${similar.id})}" class="btn btn-info btn-sm">Ver Detalles</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESEÑAS - CARGA DINÁMICA -->
+        <div class="reviews-section">
+            <h2 class="text-center mb-5">Reseñas de Compradores</h2>
+
+            <div class="row" id="reviews-container">
+                <!-- Las reseñas se cargan aquí con JavaScript -->
+            </div>
+
+            <div class="text-center mt-5">
+                <button id="load-more-btn" class="btn load-more-btn">
+                    Cargar más reseñas
+                </button>
+                <p id="no-more-reviews" class="text-muted mt-4" style="display: none;">
+                    No hay más reseñas para mostrar
+                </p>
+            </div>
+
+            <!-- Formulario nueva reseña -->
+            <div class="mt-5 p-5 bg-light rounded" th:if="${userId != null}">
+                <h4 class="mb-4">Deja tu reseña</h4>
+                <form th:action="@{/ventas/reseña/{id}(id=${producto.id})}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Título</label>
+                        <input type="text" name="titulo" class="form-control form-control-lg" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Comentario</label>
+                        <textarea name="comentario" class="form-control" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Puntuación</label>
+                        <select name="puntuacion" class="form-control form-control-lg" required>
+                            <option value="5">5 estrellas - Excelente</option>
+                            <option value="4">4 estrellas - Muy bueno</option>
+                            <option value="3">3 estrellas - Bueno</option>
+                            <option value="2">2 estrellas - Regular</option>
+                            <option value="1">1 estrella - Malo</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg px-5">Enviar Reseña</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: edderespitia@gmail.com</p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+    </footer>
+
+    <!-- BOTÓN CHAT -->
+    <div id="chat-button">
+        <img src="https://w7.pngwing.com/pngs/820/182/png-transparent-artificial-intelligence-machine-learning-cognitive-neuroscience-technology-computer-icons-artificial-intelligence-icon-text-number-business.png" alt="Asistente">
+    </div>
+
+    <!-- MODAL CHAT (OCULTO POR DEFECTO) -->
+    <div id="chat-overlay"></div>
+    <div id="chat-modal">
+        <button id="close-chat">X</button>
+        <div id="chat-content"></div>
+        <div class="chat-input">
+            <input type="text" id="mensajeInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button id="enviarBtn">Enviar</button>
+        </div>
+    </div>
+
+    <script th:inline="javascript">
+        const allReviews = /*[[${reseñas}]]*/ [];
+        const reviewsContainer = document.getElementById('reviews-container');
+        const loadMoreBtn = document.getElementById('load-more-btn');
+        const noMoreText = document.getElementById('no-more-reviews');
+        let visibleCount = 0;
+
+        function renderStars(rating) {
+            return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+        }
+
+		function renderReview(review) {
+		    const col = document.createElement('div');
+		    col.className = 'col-md-6 col-lg-4 mb-4';
+		    col.innerHTML = 
+		        '<div class="review-card h-100 d-flex flex-column">' +
+		            '<div class="d-flex justify-content-between align-items-start mb-3">' +
+		                '<div>' +
+		                    '<h6 class="mb-1 fw-bold">' + (review.nombreUsuario || 'Anónimo') + '</h6>' +
+		                    '<small class="text-muted">' + (review.fechaFormateada || 'Sin fecha') + '</small>' +
+		                '</div>' +
+		                (review.compradorVerificado ? '<span class="verified-badge">Verificado</span>' : '') +
+		            '</div>' +
+		            '<h5 class="mb-2">' + (review.titulo || 'Sin título') + '</h5>' +
+		            '<div class="mb-3">' +
+		                '<span class="stars">' + renderStars(review.puntuacion) + '</span>' +
+		            '</div>' +
+		            '<p class="flex-grow-1">' + (review.comentario || 'Sin comentario') + '</p>' +
+		            '<div class="mt-auto d-flex justify-content-between align-items-center pt-3 border-top">' +
+		                '<div>' +
+		                    '<button class="vote-btn text-success" onclick="vote(\'' + review.id + '\', true)">' +
+		                        '<i class="fas fa-thumbs-up"></i> ' + review.votosUtiles +
+		                    '</button>' +
+		                    '<button class="vote-btn text-danger ms-3" onclick="vote(\'' + review.id + '\', false)">' +
+		                        '<i class="fas fa-thumbs-down"></i> ' + review.votosInutiles +
+		                    '</button>' +
+		                '</div>' +
+		            '</div>' +
+		        '</div>';
+		    reviewsContainer.appendChild(col);
+		}
+
+        function loadMore() {
+            const batchSize = visibleCount === 0 ? 10 : 5;
+            const next = allReviews.slice(visibleCount, visibleCount + batchSize);
+            next.forEach(renderReview);
+            visibleCount += next.length;
+
+            if (visibleCount >= allReviews.length) {
+                loadMoreBtn.style.display = 'none';
+                noMoreText.style.display = 'block';
+            }
+        }
+
+        function vote(reviewId, util) {
+            fetch('/ventas/reseña/votar/' + reviewId + '?util=' + util, { method: 'POST' })
+                .then(() => location.reload());
+        }
+
+        if (allReviews.length > 0) {
+            loadMore();
+            if (visibleCount < allReviews.length) loadMoreBtn.style.display = 'block';
+        } else {
+            reviewsContainer.innerHTML = '<div class="col-12 text-center py-5"><h4>Aún no hay reseñas</h4><p>Sé el primero en opinar</p></div>';
+        }
+
+        loadMoreBtn.addEventListener('click', loadMore);
+
+        // Tu script del header y chat completo
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/user')
+                .then(r => r.json())
+                .then(data => {
+                    const span = document.querySelector('#username-btn span');
+                    const img = document.getElementById('profile-img');
+                    span.textContent = `Bienvenido, ${data.nombreUsuario}`;
+                    if (data.imgperfil) img.src = `data:image/jpeg;base64,${data.imgperfil}`;
+                })
+                .catch(() => document.querySelector('#username-btn span').textContent = 'Bienvenido, Invitado');
+
+            const btn = document.getElementById('username-btn');
+            const dropdown = document.getElementById('user-dropdown');
+            const logoutBox = document.getElementById('logout-box');
+            const logoutOpt = document.getElementById('logout-option');
+            btn.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('visible'); logoutBox.classList.remove('visible'); });
+            document.addEventListener('click', () => { dropdown.classList.remove('visible'); logoutBox.classList.remove('visible'); });
+            dropdown.addEventListener('click', e => e.stopPropagation());
+            logoutOpt.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.remove('visible'); logoutBox.classList.toggle('visible'); });
+            logoutBox.addEventListener('click', e => e.stopPropagation());
+            logoutBox.querySelector('.yes-btn').addEventListener('click', () => location.href = '/logout');
+            logoutBox.querySelector('.no-btn').addEventListener('click', () => logoutBox.classList.remove('visible'));
+
+            // Modo edición
+            const editBtn = document.getElementById('editToggleBtn');
+            const container = document.querySelector('.editable');
+            const controls = document.querySelector('.edit-controls');
+            const cancelBtn = document.getElementById('cancelBtn');
+            if (editBtn && container) {
+                editBtn.addEventListener('click', () => {
+                    const isEdit = !container.classList.contains('edit-mode');
+                    container.classList.toggle('edit-mode', isEdit);
+                    controls.style.display = isEdit ? 'block' : 'none';
+                });
+                if (cancelBtn) {
+                    cancelBtn.addEventListener('click', () => {
+                        container.classList.remove('edit-mode');
+                        controls.style.display = 'none';
+                        document.getElementById('editForm').reset();
+                    });
+                }
+            }
+
+            // Chat flotante
+            const chatBtn = document.getElementById('chat-button');
+            let dragging = false, moved = false;
+            chatBtn.addEventListener('mousedown', e => {
+                dragging = true; moved = false;
+                const rect = chatBtn.getBoundingClientRect();
+                initX = e.clientX - rect.left;
+                initY = e.clientY - rect.top;
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', stop);
+            });
+            function drag(e) {
+                if (dragging) {
+                    moved = true;
+                    chatBtn.style.left = (e.clientX - initX) + 'px';
+                    chatBtn.style.top = (e.clientY - initY) + 'px';
+                    chatBtn.style.right = 'auto';
+                    chatBtn.style.bottom = 'auto';
+                }
+            }
+            function stop() {
+                dragging = false;
+                document.removeEventListener('mousemove', drag);
+                document.removeEventListener('mouseup', stop);
+                if (!moved) {
+                    document.getElementById('chat-modal').style.display = 'block';
+                    document.getElementById('chat-overlay').style.display = 'block';
+                }
+            }
+            document.getElementById('close-chat').addEventListener('click', () => {
+                document.getElementById('chat-modal').style.display = 'none';
+                document.getElementById('chat-overlay').style.display = 'none';
+            });
+            document.getElementById('chat-overlay').addEventListener('click', () => {
+                document.getElementById('chat-modal').style.display = 'none';
+                document.getElementById('chat-overlay').style.display = 'none';
+            });
+        });
+                    const chatBtn = document.getElementById('chat-button');
+            const modal = document.getElementById('chat-modal');
+            const overlay = document.getElementById('chat-overlay');
+            const closeBtn = document.getElementById('close-chat');
+            const content = document.getElementById('chat-content');
+            const input = document.getElementById('mensajeInput');
+            const enviarBtn = document.getElementById('enviarBtn');
+
+            let chatInicializado = false;
+
+            // ABRIR SOLO AL HACER CLIC
+            chatBtn.onclick = () => {
+                if (!chatInicializado) {
+                    cargarChatInicial();
+                    chatInicializado = true;
+                }
+                modal.style.display = 'flex';
+                overlay.style.display = 'block';
+                input.focus();
+            };
+
+            // CERRAR
+            closeBtn.onclick = overlay.onclick = () => {
+                modal.style.display = 'none';
+                overlay.style.display = 'none';
+            };
+
+            // ENVIAR MENSAJE
+            const enviarMensaje = () => {
+                const msg = input.value.trim();
+                if (!msg) return;
+                fetch('/asistente', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'mensaje=' + encodeURIComponent(msg)
+                })
+                .then(r => r.text())
+                .then(html => {
+                    content.innerHTML = html;
+                    input.value = '';
+                    content.scrollTop = content.scrollHeight;
+                });
+            };
+
+            enviarBtn.onclick = enviarMensaje;
+            input.addEventListener('keypress', e => { if (e.key === 'Enter') enviarMensaje(); });
+
+            // CARGAR CHAT INICIAL (SOLO CUANDO SE ABRE)
+            const cargarChatInicial = () => {
+                content.innerHTML = '<p>Cargando asistente...</p>';
+                fetch('/asistente')
+                    .then(r => r.text())
+                    .then(html => {
+                        content.innerHTML = html;
+                        content.scrollTop = content.scrollHeight;
+                    })
+                    .catch(() => {
+                        content.innerHTML = '<p style="color:red;">Error al conectar con el asistente.</p>';
+                    });
+            };
+        
+        
+        const chatButton = document.getElementById('chat-button');
+        let isDragging = false;
+        let hasMoved = false;
+        let currentX, currentY, initialX, initialY;
+
+        chatButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            initialX = e.clientX - chatButton.getBoundingClientRect().left;
+            initialY = e.clientY - chatButton.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                hasMoved = true;
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                chatButton.style.left = `${currentX}px`;
+                chatButton.style.right = 'auto';
+                chatButton.style.top = `${currentY}px`;
+                chatButton.style.bottom = 'auto';
+            }
+        }
+
+        function stopDrag(e) {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            if (!hasMoved) {
+                openModal();
+            }
+        }
+
+        function openModal() {
+            const chatModal = document.getElementById('chat-modal');
+            const chatOverlay = document.getElementById('chat-overlay');
+            chatModal.style.display = 'block';
+            chatOverlay.style.display = 'block';
+            document.getElementById('chat-iframe').src = document.getElementById('chat-iframe').src;
+        }
+
+        const chatModal = document.getElementById('chat-modal');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const closeChat = document.getElementById('close-chat');
+
+        closeChat.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+
+        chatOverlay.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

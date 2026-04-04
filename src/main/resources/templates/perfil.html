@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Mi Perfil')}"></head>
+<style>
+        /* Definición de Variables CSS Base - seran reemplazadas por JS localstorage si existe */
+        :root {
+            --body-bg: #f8f9fa;
+            --container-bg: white;
+            --primary-btn-bg: #3498db;
+            --primary-btn-hover-bg: #2980b9;
+            --text-color-dark: #2c3e50;
+            --text-color-light: #34495e;
+            --profile-container-bg: white;
+            --profile-info-text: #2c3e50;
+            --profile-link-bg: #3498db;
+            --profile-link-hover-bg: #2980b9;
+        }
+
+        body {
+            background-color: var(--body-bg);
+            font-family: 'Inter', Arial, sans-serif;
+            color: var(--text-color-light);
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .profile-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--profile-container-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        .background-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            background-color: var(--primary-btn-bg);
+        }
+        .profile-content {
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        .profile-img {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 5px solid var(--container-bg);
+            margin-top: -110px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            background-color: white;
+        }
+        .profile-info h2 {
+            margin: 20px 0 10px;
+            font-size: 28px;
+            color: var(--profile-info-text);
+            font-weight: 800;
+        }
+        .profile-info p {
+            margin: 8px 0;
+            font-size: 16px;
+            color: var(--text-color-light);
+            font-weight: 500;
+        }
+        .profile-info i {
+            width: 25px;
+            color: var(--primary-btn-bg);
+        }
+        
+        .btn-group-custom {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .edit-btn, .menu-btn {
+            padding: 12px 25px;
+            background-color: var(--profile-link-bg);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        .edit-btn:hover, .menu-btn:hover {
+            background-color: var(--profile-link-hover-bg);
+            transform: translateY(-2px);
+            color: white;
+        }
+        .menu-btn {
+            background-color: #6c757d;
+        }
+        .menu-btn:hover {
+            background-color: #5a6268;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="main-container">
+        <div class="profile-container mb-5 mt-4">
+            <img th:if="${usuario.fondoPerfil}" th:src="${usuario.fondoPerfil.startsWith('data:') ? usuario.fondoPerfil : 'data:image/jpeg;base64,' + usuario.fondoPerfil}" alt="Background Image" class="background-image">
+            <div th:unless="${usuario.fondoPerfil}" class="background-image"></div>
+            
+            <div class="profile-content">
+                <img th:if="${usuario.imagenPerfil}" th:src="${usuario.imagenPerfil.startsWith('data:') ? usuario.imagenPerfil : 'data:image/jpeg;base64,' + usuario.imagenPerfil}" alt="Profile Image" class="profile-img">
+                <img th:unless="${usuario.imagenPerfil}" src="https://via.placeholder.com/160" alt="Profile Image" class="profile-img">
+                
+                <div class="profile-info">
+                    <h2 th:text="${usuario.nombreUsuario}">Usuario</h2>
+                    <p><i class="fas fa-envelope"></i> <span th:text="${usuario.email}"></span></p>
+                    <p><i class="fas fa-map-marker-alt"></i> <span th:text="${(usuario.ciudad ?: '') + ', ' + (usuario.departamento ?: '')}"></span></p>
+                    <p><i class="fas fa-phone"></i> <span th:text="${usuario.telefono ?: 'No especificado'}"></span></p>
+                    <p><i class="fas fa-birthday-cake"></i> Edad: <span th:text="${usuario.edad}"></span> años</p>
+                    <p><i class="fas fa-calendar-alt"></i> Registrado: <span th:text="${usuario.fechaCreacion != null ? #temporals.format(usuario.fechaCreacion, 'dd/MM/yyyy') : 'Recientemente'}"></span></p>
+                </div>
+                
+                <div class="btn-group-custom">
+                    <a th:href="@{/usuarios/editar-perfil}" class="edit-btn"><i class="fas fa-edit me-2"></i>Editar Perfil</a>
+                    <a th:href="@{/menu}" class="menu-btn"><i class="fas fa-home me-2"></i>Volver al Menú</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+            <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com | +57 3126409354</p>
+        </div>
+    </footer>
+
+    <div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+
+	<script>
+	        function applySavedColors() {
+	            try {
+	                const savedColors = localStorage.getItem('userColors');
+	                if (savedColors) {
+	                    const colors = JSON.parse(savedColors);
+	                    const root = document.documentElement; // Accede al elemento <html>
+	                    for (const key in colors) {
+	                        if (colors.hasOwnProperty(key)) {
+	                            root.style.setProperty(`--${key}`, colors[key]);
+	                        }
+	                    }
+	                }
+	            } catch (e) {
+	                console.error("Error al cargar colores desde localStorage:", e);
+	            }
+	        }
+	        // Llama a la función inmediatamente al cargar la página para evitar "flash"
+	        applySavedColors();
+	        </script>
+</body>
+</html>

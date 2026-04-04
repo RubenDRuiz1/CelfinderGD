@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellFinder TechMatch</title>
+    <link rel="icon" href="icons/celfinder logo.png" type="image/x-icon">
+    <script type="module" src="https://unpkg.com/@google/model-viewer@latest/dist/model-viewer.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .logo-container img {
+            height: 70px;
+            width: auto;
+            transition: transform 0.3s;
+        }
+        .logo-container:hover img {
+            transform: scale(1.05);
+        }
+        .menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu li a {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .menu li a:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .menu li a.action-btn {
+            background-color: #3498db;
+            font-weight: bold;
+        }
+        .menu li a.action-btn:hover {
+            background-color: #2980b9;
+        }
+        .main-container {
+            display: flex;
+            padding: 30px;
+            gap: 30px;
+        }
+        .content-boxes {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .content-box {
+            display: flex;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+        }
+        .content-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        .box-image {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            overflow: hidden;
+        }
+        .box-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: opacity 0.3s;
+        }
+        .box-image .hover-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+        }
+        .content-box:hover .default-img {
+            opacity: 0;
+        }
+        .content-box:hover .hover-img {
+            opacity: 1;
+        }
+        .box-text {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .short-text {
+            font-weight: bold;
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+        .expanded-text {
+            color: #7f8c8d;
+            font-size: 14px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+        }
+        .content-box:hover .expanded-text {
+            max-height: 100px;
+        }
+        .ruleta {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            width: 500px;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            background-color: #eee;
+        }
+        .modelos {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+		model-viewer {
+		    width: 100%;
+		    height: 100%;
+		    position: absolute;
+		    opacity: 0;
+		    transition: opacity 0.5s ease-in-out;
+		    background-color: transparent;
+		    pointer-events: none; /* <-- Agregado */
+		}
+
+		model-viewer.activa {
+		    opacity: 1;
+		    pointer-events: auto; /* <-- Agregado */
+		}
+
+        .flecha {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: background-color 0.3s;
+            z-index: 10;
+        }
+        .flecha:hover {
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+        .flecha.izquierda {
+            left: 20px;
+        }
+        .flecha.derecha {
+            right: 20px;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+        }
+        .footer-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo%20nombre%20texto%20ingles.png?raw=true" alt="Logo CellFinder" class="logo">
+        </div>
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/reportes">Mercado</a></li>
+                <li><a th:href="@{/usuarios/login}" class="action-btn" id="login-btn">Ingresar</a></li>
+                <li><a th:href="@{/usuarios/registro}" class="action-btn" id="register-btn">Registrar</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="main-container">
+        <div class="content-boxes">
+            <div class="content-box">
+                <div class="box-image">
+                    <img src="https://github.com/Rdrr01/celfinder-resource/blob/main/logo.png?raw=true" alt="Imagen 1" class="default-img">
+                    <img src="https://github.com/Rukxxxx/ccc/blob/main/comparador%20logo.png?raw=true" alt="Imagen Hover 1" class="hover-img">
+                </div>
+                <div class="box-text">
+                    <p class="short-text">Comparador de productos</p>
+                    <p class="expanded-text">Compra las caracteristicas de 2 productos para saber cual cumple con tus necesidades</p>
+                </div>
+            </div>
+            <div class="content-box">
+                <div class="box-image">
+                    <img src="https://github.com/Rdrr01/celfinder-resource/blob/main/logo.png?raw=true" alt="Imagen 2" class="default-img">
+                    <img src="icons/iaIcon.png" alt="Imagen Hover 2" class="hover-img">
+                </div>
+                <div class="box-text">
+                    <p class="short-text">Servicio al cliente especializado</p>
+                    <p class="expanded-text">Ofrecemos un servicio al cliente personalizado para cada usuario con apoyo de la administracion y la ia especializada</p>
+                </div>
+            </div>
+            <div class="content-box">
+                <div class="box-image">
+                    <img src="https://github.com/Rdrr01/celfinder-resource/blob/main/logo.png?raw=true" alt="Imagen 3" class="default-img">
+                    <img src="https://github.com/Rukxxxx/ccc/blob/main/registrar%20logo.png?raw=true" alt="Imagen Hover 3" class="hover-img">
+                </div>
+                <div class="box-text">
+                    <p class="short-text">Analisis por IA</p>
+                    <p class="expanded-text">Mediante inteligencia artificial se verifican los datos y especificaciones de los productos</p>
+                </div>
+            </div>
+            <div class="content-box">
+                <div class="box-image">
+                    <img src="https://github.com/Rdrr01/celfinder-resource/blob/main/logo.png?raw=true" alt="Imagen 4" class="default-img">
+                    <img src="https://github.com/Rukxxxx/ccc/blob/main/historial%20logo.png?raw=true" alt="Imagen Hover 4" class="hover-img">
+                </div>
+                <div class="box-text">
+                    <p class="short-text">Prediccion de preferencias</p>
+                    <p class="expanded-text">A traves de la actividad en el mercado el software podra mostrar productos que coincidan con las preferencias del usuario</p>
+                </div>
+            </div>
+        </div>
+		<section class="ruleta">
+			<div class="modelos">
+			    <model-viewer
+			        class="modelo activa"
+			        src="https://raw.githubusercontent.com/Rukxxxx/recursos/main/cellphone.glb"
+			        alt="Modelo Celular"
+			        auto-rotate
+			        camera-controls>
+			    </model-viewer>
+
+			    <model-viewer
+			        class="modelo"
+			        src="https://raw.githubusercontent.com/Rukxxxx/recursos/main/a_generic_iphone.glb"
+			        alt="iPhone Modelo 3D"
+			        auto-rotate
+			        camera-controls>
+			    </model-viewer>
+
+			    <model-viewer
+			        class="modelo"
+			        src="https://raw.githubusercontent.com/Rukxxxx/recursos/main/celar.glb"
+			        alt="Otro Modelo"
+			        auto-rotate
+			        camera-controls>
+			    </model-viewer>
+
+			    <model-viewer
+			        class="modelo"
+			        src="https://raw.githubusercontent.com/Rukxxxx/recursos/main/cute_cellphone.glb"
+			        alt="Cute Cellphone"
+			        auto-rotate
+			        camera-controls>
+			    </model-viewer>
+
+			    <model-viewer
+			        class="modelo"
+			        src="https://raw.githubusercontent.com/Rukxxxx/recursos/main/folio_5.5_cellphone.glb"
+			        alt="Folio Cellphone"
+			        auto-rotate
+			        camera-controls>
+			    </model-viewer>
+			</div>
+
+		    <button class="flecha izquierda">❮</button>
+		    <button class="flecha derecha">❯</button>
+		</section>
+
+		
+		
+    </div>
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: edderespitia@gmail.com</p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle button redirections
+            const loginBtn = document.getElementById('login-btn');
+            const registerBtn = document.getElementById('register-btn');
+            loginBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '/usuarios/login';
+            });
+            registerBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                window.location.href = '/usuarios/registro';
+            });
+
+            // 3D Model Carousel
+            const modelos = document.querySelectorAll("model-viewer");
+            let indiceActual = 0;
+            let intervaloRotacion;
+            function mostrarModelo(indice) {
+                modelos.forEach((modelo, i) => {
+                    modelo.classList.toggle("activa", i === indice);
+                });
+                indiceActual = indice;
+            }
+            function moverModelo(direccion) {
+                clearInterval(intervaloRotacion);
+                const nuevoIndice = (indiceActual + direccion + modelos.length) % modelos.length;
+                mostrarModelo(nuevoIndice);
+                iniciarRotacionAutomatica();
+            }
+            function iniciarRotacionAutomatica() {
+                clearInterval(intervaloRotacion);
+                intervaloRotacion = setInterval(() => {
+                    moverModelo(1);
+                }, 5000);
+            }
+            if (modelos.length > 0) {
+                mostrarModelo(0);
+                document.querySelector(".flecha.izquierda").addEventListener("click", () => moverModelo(-1));
+                document.querySelector(".flecha.derecha").addEventListener("click", () => moverModelo(1));
+                iniciarRotacionAutomatica();
+            }
+
+            // Content boxes hover effects
+            const contentBoxes = document.querySelectorAll('.content-box');
+            contentBoxes.forEach(box => {
+                const expandedText = box.querySelector('.expanded-text');
+                box.addEventListener('mouseenter', () => {
+                    expandedText.style.maxHeight = expandedText.scrollHeight + 'px';
+                });
+                box.addEventListener('mouseleave', () => {
+                    expandedText.style.maxHeight = '0';
+                });
+            });
+        });
+    </script>
+</body>
+</html>

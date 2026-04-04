@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solicitar Compra</title>
+    <link rel="icon" href="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo.png?raw=true" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Arial', sans-serif; }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+        .logo-container img { height: 70px; width: auto; }
+        .menu { display: flex; list-style: none; gap: 25px; align-items: center; }
+        .menu li a, .user-btn { color: white; text-decoration: none; padding: 12px 18px; border-radius: 6px; transition: all 0.3s; font-size: 16px; }
+        .menu li a:hover { background-color: #ffffff; }
+        .user-btn { background: transparent; border: none; cursor: pointer; display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .user-btn img { width: 30px; height: 30px; border-radius: 50%; object-fit: cover; }
+        .user-dropdown { display: none; position: absolute; right: 30px; top: 80px; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 200px; z-index: 1000; }
+        .user-dropdown.visible { display: block; }
+        .user-dropdown button { display: block; width: 100%; text-align: left; background: none; border: none; padding: 10px; color: #2c3e50; cursor: pointer; }
+        .user-dropdown button:hover { background: #f0f0f0; }
+        .logout-box { display: none; position: absolute; right: 30px; top: 80px; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 300px; z-index: 1001; text-align: center; }
+        .logout-box.visible { display: block; }
+        .logout-box .yes-btn { background: #e74c3c; color: white; }
+        .logout-box .no-btn { background: #3498db; color: white; }
+        body { background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%); min-height: 100vh; display: flex; flex-direction: column; }
+        .card { max-width: 700px; margin: 40px auto; border-radius: 25px; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .producto-img { height: 300px; object-fit: cover; }
+        .precio { font-size: 3.5rem; color: #e74c3c; font-weight: bold; }
+        .btn-enviar { background: #28a745; border: none; padding: 18px; font-size: 1.5rem; border-radius: 50px; }
+        .btn-enviar:hover { background: #218838; transform: scale(1.05); }
+        footer { background: #2c3e50; color: white; text-align: center; padding: 20px; margin-top: auto; }
+        #chat-button { position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px; border-radius: 50%; cursor: pointer; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; }
+        #chat-button:hover { transform: scale(1.15); }
+        #chat-button img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+        #chat-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 9998; }
+        #chat-modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 90%; max-width: 700px; height: 85%; background: white; border-radius: 12px; box-shadow: 0 0 30px rgba(0,0,0,0.4); overflow: hidden; flex-direction: column; z-index: 10000; }
+        #close-chat { position: absolute; top: 12px; right: 12px; background: #dc3545; color: white; border: none; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: bold; z-index: 10001; }
+        #close-chat:hover { background: #c82333; }
+        #chat-content { flex: 1; overflow-y: auto; padding: 20px; }
+        .chat-input { display: flex; padding: 15px; background: #f8f9fa; border-top: 1px solid #ddd; gap: 10px; }
+        .chat-input input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 50px; font-size: 16px; }
+        .chat-input button { padding: 12px 20px; background: #3498db; color: white; border: none; border-radius: 50px; cursor: pointer; }
+        .chat-input button:hover { background: #2980b9; }
+        @media (max-width: 768px) { .profile { width: 180px; } }
+        @media (max-width: 480px) { .profile { width: 150px; padding: 15px; } }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo%20nombre.png?raw=true" alt="Logo CellFinder" class="logo">
+        </div>
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/carrito">Carrito</a></li>
+                <li><a href="/ventas/listar">Mercado</a></li>
+                <li class="user-menu">
+                    <button id="username-btn" class="user-btn">
+                        <img id="profile-img" src="https://via.placeholder.com/30" alt="Profile">
+                        <span>Cargando...</span>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <button onclick="location.href='/usuarios/perfil'">Ver Perfil</button>
+                        <button onclick="location.href='/ventas/notificaciones'">Notificaciones</button>
+                        <button id="logout-option">Cerrar Sesión</button>
+                    </div>
+                    <div class="logout-box" id="logout-box">
+                        <p>¿Estás seguro de cerrar sesión?</p>
+                        <button class="yes-btn">Sí</button>
+                        <button class="no-btn">No</button>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container my-5 flex-grow-1 d-flex align-items-center">
+        <div class="card w-100">
+            <img th:if="${producto.imagenBase64}"
+                th:src="@{'data:image/jpeg;base64,' + ${producto.imagenBase64}}"
+                class="w-100 producto-img" alt="Producto">
+            <img th:unless="${producto.imagenBase64}" 
+                src="/images/no-image.png" class="w-100 producto-img" alt="Sin imagen">
+
+            <div class="card-body text-center p-5 bg-white">
+                <h2 class="mb-4 fw-bold" th:text="${producto.nombre}"></h2>
+                <h3 class="precio mb-5">$ <span th:text="${producto.precio}"></span></h3>
+
+                <form action="/ventas/procesar-compra" method="post">
+                    <input type="hidden" name="productoId" th:value="${producto.id}">
+
+                    <div class="mb-4">
+                        <input type="text" name="direccion" class="form-control form-control-lg text-center" required placeholder="Dirección completa de envío">
+                    </div>
+                    <div class="mb-4">
+                        <input type="email" name="correo" class="form-control form-control-lg text-center" required th:value="${comprador.email}">
+                    </div>
+                    <div class="mb-5">
+                        <input type="text" name="contacto" class="form-control form-control-lg text-center" required pattern="\d{10}" maxlength="10" placeholder="Teléfono (10 dígitos)">
+                    </div>
+
+                    <button type="submit" class="btn btn-enviar text-white w-100">
+                        <i class="fas fa-paper-plane me-2"></i> ENVIAR SOLICITUD DE COMPRA
+                    </button>
+                </form>
+
+                <a th:href="@{/ventas/detalle/{id}(id=${producto.id})}" class="btn btn-link mt-4 text-muted">Cancelar</a>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: edderespitia@gmail.com</p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+    </footer>
+    <!-- BOTÓN CHAT -->
+    <div id="chat-button">
+        <img src="https://w7.pngwing.com/pngs/820/182/png-transparent-artificial-intelligence-machine-learning-cognitive-neuroscience-technology-computer-icons-artificial-intelligence-icon-text-number-business.png" alt="Asistente">
+    </div>
+
+    <!-- MODAL CHAT (OCULTO POR DEFECTO) -->
+    <div id="chat-overlay"></div>
+    <div id="chat-modal">
+        <button id="close-chat">X</button>
+        <div id="chat-content"></div>
+        <div class="chat-input">
+            <input type="text" id="mensajeInput" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button id="enviarBtn">Enviar</button>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/user', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const usernameBtn = document.getElementById('username-btn');
+                const profileImg = document.getElementById('profile-img');
+                usernameBtn.querySelector('span').textContent = `Bienvenido, ${data.nombreUsuario}`;
+                if (data.imgperfil) {
+                    profileImg.src = `data:image/jpeg;base64,${data.imgperfil}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+                const usernameBtn = document.getElementById('username-btn');
+                usernameBtn.querySelector('span').textContent = 'Bienvenido, Invitado';
+            });
+
+            // User dropdown functionality
+            const usernameBtn = document.getElementById('username-btn');
+            const userDropdown = document.getElementById('user-dropdown');
+            const logoutOption = document.getElementById('logout-option');
+            const logoutBox = document.getElementById('logout-box');
+            const yesBtn = logoutBox.querySelector('.yes-btn');
+            const noBtn = logoutBox.querySelector('.no-btn');
+
+            usernameBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('visible');
+                logoutBox.classList.remove('visible');
+            });
+
+            document.addEventListener('click', function() {
+                userDropdown.classList.remove('visible');
+                logoutBox.classList.remove('visible');
+            });
+
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            logoutOption.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.remove('visible');
+                logoutBox.classList.toggle('visible');
+            });
+
+            logoutBox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            yesBtn.addEventListener('click', function() {
+                window.location.href = '/logout';
+            });
+
+            noBtn.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+        });
+
+            const chatBtn = document.getElementById('chat-button');
+            const modal = document.getElementById('chat-modal');
+            const overlay = document.getElementById('chat-overlay');
+            const closeBtn = document.getElementById('close-chat');
+            const content = document.getElementById('chat-content');
+            const input = document.getElementById('mensajeInput');
+            const enviarBtn = document.getElementById('enviarBtn');
+
+            let chatInicializado = false;
+
+            // ABRIR SOLO AL HACER CLIC
+            chatBtn.onclick = () => {
+                if (!chatInicializado) {
+                    cargarChatInicial();
+                    chatInicializado = true;
+                }
+                modal.style.display = 'flex';
+                overlay.style.display = 'block';
+                input.focus();
+            };
+
+            // CERRAR
+            closeBtn.onclick = overlay.onclick = () => {
+                modal.style.display = 'none';
+                overlay.style.display = 'none';
+            };
+
+            // ENVIAR MENSAJE
+            const enviarMensaje = () => {
+                const msg = input.value.trim();
+                if (!msg) return;
+                fetch('/asistente', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'mensaje=' + encodeURIComponent(msg)
+                })
+                .then(r => r.text())
+                .then(html => {
+                    content.innerHTML = html;
+                    input.value = '';
+                    content.scrollTop = content.scrollHeight;
+                });
+            };
+
+            enviarBtn.onclick = enviarMensaje;
+            input.addEventListener('keypress', e => { if (e.key === 'Enter') enviarMensaje(); });
+
+            // CARGAR CHAT INICIAL (SOLO CUANDO SE ABRE)
+            const cargarChatInicial = () => {
+                content.innerHTML = '<p>Cargando asistente...</p>';
+                fetch('/asistente')
+                    .then(r => r.text())
+                    .then(html => {
+                        content.innerHTML = html;
+                        content.scrollTop = content.scrollHeight;
+                    })
+                    .catch(() => {
+                        content.innerHTML = '<p style="color:red;">Error al conectar con el asistente.</p>';
+                    });
+            };
+        
+        
+        const chatButton = document.getElementById('chat-button');
+        let isDragging = false;
+        let hasMoved = false;
+        let currentX, currentY, initialX, initialY;
+
+        chatButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            initialX = e.clientX - chatButton.getBoundingClientRect().left;
+            initialY = e.clientY - chatButton.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                hasMoved = true;
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                chatButton.style.left = `${currentX}px`;
+                chatButton.style.right = 'auto';
+                chatButton.style.top = `${currentY}px`;
+                chatButton.style.bottom = 'auto';
+            }
+        }
+
+        function stopDrag(e) {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            if (!hasMoved) {
+                openModal();
+            }
+        }
+
+        function openModal() {
+            const chatModal = document.getElementById('chat-modal');
+            const chatOverlay = document.getElementById('chat-overlay');
+            chatModal.style.display = 'block';
+            chatOverlay.style.display = 'block';
+            document.getElementById('chat-iframe').src = document.getElementById('chat-iframe').src;
+        }
+
+        const chatModal = document.getElementById('chat-modal');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const closeChat = document.getElementById('close-chat');
+
+        closeChat.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+
+        chatOverlay.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

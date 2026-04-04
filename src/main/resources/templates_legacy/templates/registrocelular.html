@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellFinder TechMatch</title>
+    <link rel="icon" href="icono.ico" type="image/x-icon">
+    <link rel="stylesheet" href="stylescc.css">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        body, html {
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-size: cover;
+            background-position: center;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .video-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: -1;
+        }
+
+        .logo {
+			position: absolute;
+			    top: 0px;
+			    left: 0px;
+			    font-size: 24px;
+			    width: 500px;
+			    height: 100px;
+			    background: #000000;
+			    border-radius: 0 0 85% 0;
+			    color: aliceblue;
+			    font-weight: bold;
+			    color: white;
+			    background-color: rgba(0, 0, 0, 0.7);
+			    padding: 10px 20px;
+			    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo2 {
+            position: absolute;
+            top: -35px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+        }
+
+        .logo2 img {
+            max-width: 150px;
+            height: auto;
+            margin-right: 10px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column; 
+            align-items: center;
+            margin-top: 50px; /* Ajusta este valor para elevar el contenedor */
+        }
+
+        .container h1 {
+            margin-bottom: 20px; 
+            margin-left: -20px; 
+        }
+
+        .form-content {
+            display: flex; 
+            gap: 20px; 
+            align-items: flex-start; 
+        }
+
+        .celular {
+            background-color: rgba(67, 33, 255, 0.486);
+            padding: 20px;
+            border-radius: 12%;
+            backdrop-filter: blur(20px);
+            border: 2px solid white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            height: auto; 
+            width: 300px; 
+        }
+
+        .celular h2 {
+            text-align: center;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+
+        .input-group label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+            color: #fff;
+            pointer-events: none;
+            opacity: 1;
+            z-index: 1;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background-color: transparent;
+            border: 2px solid white;
+            border-radius: 5px;
+            color: #fff;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -20px;
+            left: 5px;
+            font-size: 12px;
+            color: #007bff;
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #007bff;
+            background-color: white; /* Fondo blanco al enfocar */
+            color: black; /* Texto negro al enfocar */
+        }
+
+        .botones {
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            margin-top: 10px; /* Ajusta la separación entre botones y cajas */
+        }
+
+        .botones button {
+            padding: 10px 20px;
+            margin: 5px 0; 
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+        }
+
+        .botones button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <video autoplay muted loop class="video-background">
+        <source src="https://github.com/Rdrr01/celfinder-resource/raw/refs/heads/main/pspblue.mp4" type="video/mp4">
+    </video>
+    <div class="logo">CellFinder</div>
+    <div class="logo2">
+        <img src="icons/celfinder logo nombre.png" alt="Logo 2">
+    </div>
+    <div class="container">
+        <h1>Registrar Dos Celulares</h1>
+        <form action="/comparar/registrar" method="post">
+            <div class="form-content">
+                <div class="celular">
+                    <h2>Celular 1</h2>
+                    <div class="input-group">
+                        <label for="nombre1">Nombre de Celular:</label>
+                        <input type="text" id="nombre1" name="nombre" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="ghz1">Frecuencia (GHz):</label>
+                        <input type="number" step="0.1" id="ghz1" name="ghz" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="camara1">Cámaras:</label>
+                        <input type="number" id="camara1" name="camara" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="ram1">RAM (GB):</label>
+                        <input type="number" id="ram1" name="ram" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="bateria1">Batería (mAh):</label>
+                        <input type="number" id="bateria1" name="bateria" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="almacenamiento1">Almacenamiento (GB):</label>
+                        <input type="number" id="almacenamiento1" name="almacenamiento" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="nombreCpu1">Nombre CPU:</label>
+                        <input type="text" id="nombreCpu1" name="nombreCpu" required>
+                    </div>
+                </div>
+                <div class="celular">
+                    <h2>Celular 2</h2>
+                    <div class="input-group">
+                        <label for="nombre2">Nombre de Celular:</label>
+                        <input type="text" id="nombre2" name="nombre2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="ghz2">Frecuencia (GHz):</label>
+                        <input type="number" step="0.1" id="ghz2" name="ghz2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="camara2">Cámaras:</label>
+                        <input type="number" id="camara2" name="camara2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="ram2">RAM (GB):</label>
+                        <input type="number" id="ram2" name="ram2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="bateria2">Batería (mAh):</label>
+                        <input type="number" id="bateria2" name="bateria2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="almacenamiento2">Almacenamiento (GB):</label>
+                        <input type="number" id="almacenamiento2" name="almacenamiento2" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="nombreCpu2">Nombre CPU:</label>
+                        <input type="text" id="nombreCpu2" name="nombreCpu2" required>
+                    </div>
+                </div>
+            </div>
+            <div class="botones">
+                <a href="/menu"><button type="button">Volver</button></a>
+                <button type="submit">Registrar y Comparar</button>
+            </div>
+        </form>
+    </div>
+    <script src="https://raw.githubusercontent.com/Rdrr01/celfinder-resource/refs/heads/main/scriptcc.js"></script>
+    <script>
+        function volver() {
+            alert('Volver');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Mercado de Productos')}">
+</head>
+<style>
+        body { background-color: #f4f6f9; min-height: 100vh; display: flex; flex-direction: column; }
+        .marketplace-header { text-align: center; margin-bottom: 30px; }
+        .marketplace-header h1 { color: #2c3e50; font-weight: 800; }
+        
+        /* Sidebar Filtros */
+        .filter-sidebar { border-radius: 12px; }
+        .filter-sidebar .form-label { text-transform: uppercase; letter-spacing: 0.5px; font-size: 0.75rem; }
+        .filter-sidebar .form-control, .filter-sidebar .form-select { border-radius: 8px; border: 1px solid #ced4da; }
+        .filter-sidebar .form-control:focus, .filter-sidebar .form-select:focus { box-shadow: none; border-color: #3498db; }
+        
+        /* Cards de Producto Pro */
+        .product-card { 
+            border-radius: 12px; transition: all 0.3s ease; border: 1px solid #e9ecef !important; 
+            overflow: hidden; background: #fff;
+        }
+        .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+        .product-card .card-img-wrapper { 
+            height: 220px; padding: 20px; background: #fff; display: flex; align-items: center; justify-content: center;
+            border-bottom: 1px solid #f1f3f5;
+        }
+        .product-card img { max-height: 100%; max-width: 100%; object-fit: contain; transition: transform 0.3s ease; }
+        .product-card:hover img { transform: scale(1.05); }
+        .card-body-pro { padding: 16px; background-color: #fff; }
+        .product-condition { font-size: 0.70rem; font-weight: 700; color: #868e96; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; display: block; }
+        .product-title { font-size: 1rem; color: #343a40; font-weight: 600; margin-bottom: 10px; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 48px; }
+        
+        /* Precios */
+        .price-original { text-decoration: line-through; color: #adb5bd; font-size: 0.85rem; }
+        .price-final { font-size: 1.4rem; font-weight: 700; color: #212529; display: flex; align-items: center; gap: 8px; }
+        .discount-badge { font-size: 0.8rem; padding: 3px 6px; font-weight: 700; background-color: #e6fcf5; color: #0ca678; border-radius: 4px; }
+        
+        .stock-info { font-size: 0.85rem; font-weight: 500; color: #495057; display: flex; align-items: center; gap: 5px; margin-top: 10px; }
+        .stock-low { color: #e03131; }
+        
+        /* Recomendados */
+        .recomendaciones-section { background: linear-gradient(135deg, #f0f8ff, #e6f2ff); border-radius: 12px; padding: 20px; margin-bottom: 30px; border: 1px solid #cce5ff; }
+        .reco-title { color: #0056b3; font-weight: 800; font-size: 1.25rem; display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+        .badge-ia { background: linear-gradient(90deg, #1976d2, #9c27b0); color: white; font-size: 0.7rem; padding: 4px 8px; border-radius: 12px; }
+        .card-recomendado { border: 2px solid #64b5f6 !important; }
+        
+        /* Combos */
+        .combos-banner { background: linear-gradient(90deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%); border-radius: 12px; padding: 15px 20px; margin-bottom: 30px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 4px 15px rgba(255, 154, 158, 0.3); }
+        .combos-banner h4 { margin: 0; color: #d81b60; font-weight: 800; }
+        
+        .z-index-1 { z-index: 1; }
+    </style>
+
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <main class="container-fluid mt-4 mb-5 px-lg-5 flex-grow-1">
+        <div class="marketplace-header">
+            <h1>Descubre, Compara y Compra</h1>
+            <p class="text-muted">Los mejores productos tecnológicos en un solo lugar</p>
+        </div>
+
+        <div th:if="${mensaje}" class="alert alert-success mt-3 shadow-sm rounded-3" th:text="${mensaje}"></div>
+        <div th:if="${error}" class="alert alert-danger mt-3 shadow-sm rounded-3" th:text="${error}"></div>
+
+        <div class="row gx-lg-5">
+            <!-- SIDEBAR FILTROS -->
+            <div class="col-lg-3 mb-4">
+                <div style="position: sticky; top: 20px; align-self: flex-start;">
+                    <!-- Opciones Vendedor (Si es Admin o Vendedor) -->
+                    <div class="mb-4 text-center" sec:authorize="hasAnyRole('ROLE_VENDEDOR', 'ROLE_ADMIN')">
+                        <a th:href="@{/ventas/publicar}" class="btn btn-success fw-bold p-3 w-100 shadow-sm" style="border-radius: 12px !important; border: 2px solid #28a745;">
+                            <i class="fas fa-bullhorn me-2"></i>Publicar Producto
+                        </a>
+                    </div>
+
+                    <div class="card shadow-sm filter-sidebar">
+                        <div class="card-body p-4">
+                            <h5 class="fw-bold mb-4 text-dark"><i class="fas fa-filter text-primary me-2"></i>Filtros</h5>
+                            <form th:action="@{/ventas/buscar}" method="get">
+                                <!-- Búsqueda Nombre -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted fw-bold">Buscar Producto</label>
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-text bg-light"><i class="fas fa-search"></i></span>
+                                        <input type="text" name="nombre" class="form-control" th:value="${nombre}" placeholder="Ej. Smartphone, Laptop...">
+                                    </div>
+                                </div>
+                                
+                                <!-- Condición -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted fw-bold">Condición</label>
+                                    <select name="estado" class="form-select form-select-sm">
+                                        <option value="">Cualquier estado</option>
+                                        <option value="nuevo" th:selected="${estado == 'nuevo'}">Nuevo</option>
+                                        <option value="usado" th:selected="${estado == 'usado'}">Usado</option>
+                                        <option value="reacondicionado" th:selected="${estado == 'reacondicionado'}">Reacondicionado</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Rango de Precio -->
+                                <div class="mb-4">
+                                    <label class="form-label text-muted fw-bold">Rango Precio (COP)</label>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <input type="number" name="precioMin" class="form-control form-control-sm" th:value="${precioMin}" placeholder="Mín.">
+                                        <span class="text-muted">-</span>
+                                        <input type="number" name="precioMax" class="form-control form-control-sm" th:value="${precioMax}" placeholder="Máx.">
+                                    </div>
+                                </div>
+                                
+                                <hr class="text-muted">
+                                
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary btn-sm fw-bold px-4 py-2">Aplicar Filtros</button>
+                                    <a th:href="@{/ventas/listar}" class="btn btn-light border btn-sm fw-bold text-muted">Limpiar Búsqueda</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MAIN CONTENT: GRID DE PRODUCTOS -->
+            <div class="col-lg-9">
+                <!-- Combos Banner -->
+                <div th:if="${combos != null and !combos.isEmpty()}" class="combos-banner">
+                    <div>
+                        <h4><i class="fas fa-gift me-2"></i>¡Combos Exclusivos!</h4>
+                        <p class="mb-0 text-dark opacity-75">Aprovecha nuestras ofertas llevando varios productos a un menor precio.</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                         <a th:if="${!combos.isEmpty()}" th:href="@{/ventas/combo/{id}(id=${combos[0].id})}" class="btn btn-dark rounded-pill px-4 fw-bold shadow-sm">Ver Oferta</a>
+                    </div>
+                </div>
+
+                <!-- Recomendaciones J48 -->
+                <div th:if="${recomendados != null and !recomendados.isEmpty()}" class="recomendaciones-section shadow-sm">
+                    <div class="reco-title">
+                        <i class="fas fa-magic text-primary"></i> Seleccionados para ti
+                        <span class="badge-ia"><i class="fas fa-brain me-1"></i>IA</span>
+                    </div>
+                    <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                        <!-- Iterar rec de recomendados pero aplicar el mismo estilo pro -->
+                        <div class="col" th:each="producto : ${recomendados}">
+                            <!-- Reutilizamos la estructura de card pro pero con borde azul -->
+                            <a th:href="@{/ventas/detalle/{id}(id=${producto.id})}" class="text-decoration-none">
+                                <div class="card h-100 product-card card-recomendado position-relative">
+                                    <div class="card-img-wrapper">
+                                        <img th:if="${producto.imagenBase64}" th:src="@{'data:image/jpeg;base64,' + ${producto.imagenBase64}}" alt="Img">
+                                        <img th:unless="${producto.imagenBase64}" src="https://via.placeholder.com/300?text=Sin+Imagen" alt="Sin imagen">
+                                    </div>
+                                    <div class="card-body card-body-pro d-flex flex-column">
+                                        <span class="product-condition" th:text="${producto.estado ?: 'NUEVO'}">NUEVO</span>
+                                        <h5 class="product-title" th:text="${producto.nombre}">Producto</h5>
+                                        <div class="mt-auto">
+                                            <div th:if="${producto.descuento != null && producto.descuento > 0}">
+                                                <div class="price-final">
+                                                    <span th:text="${'$' + #numbers.formatDecimal(producto.precioFinal != null ? producto.precioFinal : producto.precio, 0, 'COMMA', 0, 'POINT')}"></span>
+                                                    <span class="discount-badge" th:text="${'-' + producto.descuento + '%'}"></span>
+                                                </div>
+                                            </div>
+                                            <div th:unless="${producto.descuento != null && producto.descuento > 0}">
+                                                <div class="price-final" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tienda General -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h4 class="fw-bold text-dark m-0">Todos los Productos</h4>
+                    <span class="text-muted fw-bold small" th:text="${totalItems + ' resultados'}"></span>
+                </div>
+                
+                <div th:if="${productos == null or productos.isEmpty()}" class="text-center py-5">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5 class="text-secondary fw-bold">No se encontraron productos</h5>
+                    <p class="text-muted">Intenta con otros filtros de búsqueda.</p>
+                </div>
+
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-xl-4 g-4 mb-5" id="productos-tienda">
+                    <div class="col" th:each="producto : ${productos}">
+                        <a th:href="@{/ventas/detalle/{id}(id=${producto.id})}" class="text-decoration-none h-100 d-block">
+                            <div class="card h-100 product-card position-relative">
+                                <!-- Badges Absolutos -->
+                                <span th:if="${producto.stock <= 0 or producto.estadoVenta == 'AGOTADO'}" class="badge bg-danger position-absolute top-0 start-0 m-2 z-index-1 shadow-sm px-2 py-1"><i class="fas fa-exclamation-circle me-1"></i>Agotado</span>
+                                <span th:if="${purchasedProductIds != null and purchasedProductIds.contains(producto.id)}" class="badge bg-primary position-absolute top-0 end-0 m-2 z-index-1 shadow-sm px-2 py-1"><i class="fas fa-bag-shopping me-1"></i>Ya lo compraste</span>
+                                
+                                <div class="card-img-wrapper">
+                                    <img th:if="${producto.imagenBase64}" th:src="@{'data:image/jpeg;base64,' + ${producto.imagenBase64}}" alt="Producto">
+                                    <img th:unless="${producto.imagenBase64}" src="https://via.placeholder.com/300?text=Sin+Imagen" alt="Sin imagen">
+                                </div>
+                                
+                                <div class="card-body card-body-pro d-flex flex-column">
+                                    <span class="product-condition" th:text="${producto.estado ?: 'NUEVO'}">NUEVO</span>
+                                    <h5 class="product-title" th:text="${producto.nombre}">Producto title</h5>
+                                    
+                                    <div class="mt-auto">
+                                        <div th:if="${producto.descuento != null && producto.descuento > 0}">
+                                            <span class="price-original" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></span>
+                                            <div class="price-final">
+                                                <span th:text="${'$' + #numbers.formatDecimal(producto.precioFinal != null ? producto.precioFinal : producto.precio, 0, 'COMMA', 0, 'POINT')}"></span>
+                                                <span class="discount-badge" th:text="${'-' + producto.descuento + '%'}"></span>
+                                            </div>
+                                        </div>
+                                        <div th:unless="${producto.descuento != null && producto.descuento > 0}">
+                                            <div class="price-final" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></div>
+                                        </div>
+                                        
+                                        <div class="stock-info" th:classappend="${producto.stock <= 2 && producto.stock > 0} ? 'stock-low' : ''">
+                                            <i class="fas fa-box-open" th:classappend="${producto.stock <= 2 && producto.stock > 0} ? 'text-danger' : 'text-primary'"></i>
+                                            <span th:if="${producto.stock > 0}" th:text="'Disponibles: ' + ${producto.stock}"></span>
+                                            <span th:if="${producto.stock <= 0}" class="text-danger fw-bold">Sin unidades</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Paginación -->
+                <nav aria-label="Navegación de páginas" th:if="${totalPages > 1}">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link shadow-sm" th:href="@{/ventas/listar(page=0, nombre=${nombre}, estado=${estado}, precioMin=${precioMin}, precioMax=${precioMax})}"><i class="fas fa-angle-double-left"></i> Primera</a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+                            <a class="page-link shadow-sm" th:href="@{/ventas/listar(page=${currentPage - 1}, nombre=${nombre}, estado=${estado}, precioMin=${precioMin}, precioMax=${precioMax})}"><i class="fas fa-angle-left"></i> Ant</a>
+                        </li>
+                        
+                        <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                            <!-- Show max 5 pages around current -->
+                            <li class="page-item" th:if="${i >= currentPage - 2 and i <= currentPage + 2}" th:classappend="${i == currentPage} ? 'active'">
+                                <a class="page-link shadow-sm" th:href="@{/ventas/listar(page=${i}, nombre=${nombre}, estado=${estado}, precioMin=${precioMin}, precioMax=${precioMax})}" th:text="${i + 1}">1</a>
+                            </li>
+                        </th:block>
+
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link shadow-sm" th:href="@{/ventas/listar(page=${currentPage + 1}, nombre=${nombre}, estado=${estado}, precioMin=${precioMin}, precioMax=${precioMax})}">Sig <i class="fas fa-angle-right"></i></a>
+                        </li>
+                        <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+                            <a class="page-link shadow-sm" th:href="@{/ventas/listar(page=${totalPages - 1}, nombre=${nombre}, estado=${estado}, precioMin=${precioMin}, precioMax=${precioMax})}">Última <i class="fas fa-angle-double-right"></i></a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </main>
+
+    <footer style="text-align:center; padding:30px; background:#f1f3f5; color:#6c757d; border-top: 1px solid #e9ecef;">
+        <div class="container">
+            <h5 class="text-dark fw-bold mb-3"><i class="fas fa-mobile-alt text-primary me-2"></i>CellFinder TechMatch</h5>
+            <p class="mb-1">© 2025. Todos los derechos reservados.</p>
+            <div class="d-flex justify-content-center gap-3 mt-3">
+                <a href="#" class="text-muted text-decoration-none"><i class="fas fa-map-marker-alt me-1"></i> Universidad Cedesarrollo, Cartagena Bolívar</a>
+                <span class="text-muted">|</span>
+                <a href="mailto:edderespitia@gmail.com" class="text-muted text-decoration-none"><i class="fas fa-envelope me-1"></i> edderespitia@gmail.com</a>
+                <span class="text-muted">|</span>
+                <span class="text-muted"><i class="fas fa-phone me-1"></i> +57 3126409354</span>
+            </div>
+        </div>
+    </footer>
+
+    <div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

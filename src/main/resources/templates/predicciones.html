@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Predicciones de Precios</title>
+    <!-- Agrega Bootstrap o tu CSS -->
+</head>
+<body>
+    <h1>Predicciones de Precios</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Categoría</th>
+                <th>Año</th>
+                <th>Precio Predicho</th>
+                <th>Tendencia</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="pred : ${predicciones}">
+                <td th:text="${pred.category}"></td>
+                <td th:text="${pred.year}"></td>
+                <td th:text="${pred.predictedPrice}"></td>
+                <td th:text="${pred.trend}"></td>
+                <td th:text="${pred.datePredicted}"></td>
+            </tr>
+        </tbody>
+    </table>
+    <!-- Form para predecir nueva -->
+    <form th:action="@{/predicciones/{category}/{year}(category='laptops',year=2026)}" method="get">
+        <button type="submit">Predecir Laptop 2026</button>
+    </form>
+    <!-- Repite para otras categorías -->
+</body>
+</html>

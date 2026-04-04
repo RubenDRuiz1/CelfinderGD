@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Editar Teléfono</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .logo-container img {
+            height: 70px;
+            width: auto;
+            transition: transform 0.3s;
+        }
+        .logo-container:hover img {
+            transform: scale(1.05);
+        }
+        .menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu li a, .logout-btn {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .menu li a:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        .logout-box {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            z-index: 1000;
+            text-align: center;
+        }
+        .logout-box.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logout-box p {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .logout-box button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-box .yes-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .logout-box .yes-btn:hover {
+            background-color: #c0392b;
+        }
+        .logout-box .no-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .logout-box .no-btn:hover {
+            background-color: #2980b9;
+        }
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .form-label {
+            color: #2c3e50;
+        }
+        .form-control {
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 10px;
+            transition: border-color 0.3s;
+        }
+        .form-control:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+        .btn-primary {
+            background-color: #3498db;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            border: none;
+            transition: background-color 0.3s;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            margin-top: 30px;
+        }
+        .footer-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        #chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            transition: transform 0.2s;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #chat-button:hover {
+            transform: scale(1.1);
+        }
+
+        #chat-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+        }
+
+        #chat-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            height: 80%;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        #chat-iframe-container {
+            width: 100%;
+            height: calc(100% - 40px);
+        }
+
+        #chat-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #close-chat {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #close-chat:hover {
+            background-color: #c82333;
+        }
+
+        #chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="icons/celfinder logo nombre.png" alt="Logo CellFinder" class="logo">
+        </div>
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/ventas/listar">Mercado</a></li>
+                <li><a href="/notificaciones">Notificaciones</a></li>
+                <li class="logout-item">
+                    <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+                    <div class="logout-box" id="logout-box">
+                        <p>¿Estás seguro de cerrar sesión?</p>
+                        <button class="yes-btn">Sí</button>
+                        <button class="no-btn">No</button>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h1>Editar Teléfono</h1>
+        <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+        <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+        <form th:action="@{/ventas/editar/{id}(id=${telefono.id})}" method="post" th:object="${telefono}" enctype="multipart/form-data">
+            <div class="mb-3">
+                <label for="nombre" class="form-label">Nombre del Teléfono</label>
+                <input type="text" class="form-control" id="nombre" th:field="*{nombre}" required>
+            </div>
+            <div class="mb-3">
+                <label for="precio" class="form-label">Precio</label>
+                <input type="number" step="0.01" class="form-control" id="precio" th:field="*{precio}" required>
+            </div>
+            <div class="mb-3">
+                <label for="estado" class="form-label">Estado</label>
+                <select class="form-control" id="estado" th:field="*{estado}" required>
+                    <option value="nuevo">Nuevo</option>
+                    <option value="usado">Usado</option>
+                    <option value="reacondicionado">Reacondicionado</option>
+                </select>
+            </div>
+            <div class="mb-3">
+                <label for="descripcion" class="form-label">Descripción</label>
+                <textarea class="form-control" id="descripcion" th:field="*{descripcion}" rows="3"></textarea>
+            </div>
+            <div class="mb-3">
+                <label for="imagen" class="form-label">Imagen (dejar en blanco para mantener la actual)</label>
+                <input type="file" class="form-control" id="imagen" name="imagen" accept="image/*">
+            </div>
+            <div class="mb-3">
+                <label for="ghz" class="form-label">Frecuencia (GHz)</label>
+                <input type="number" step="0.1" class="form-control" id="ghz" th:field="*{ghz}">
+            </div>
+            <div class="mb-3">
+                <label for="camara" class="form-label">Cámara (MP)</label>
+                <input type="number" class="form-control" id="camara" th:field="*{camara}">
+            </div>
+            <div class="mb-3">
+                <label for="ram" class="form-label">RAM (GB)</label>
+                <input type="number" class="form-control" id="ram" th:field="*{ram}">
+            </div>
+            <div class="mb-3">
+                <label for="bateria" class="form-label">Batería (mAh)</label>
+                <input type="number" class="form-control" id="bateria" th:field="*{bateria}">
+            </div>
+            <div class="mb-3">
+                <label for="almacenamiento" class="form-label">Almacenamiento (GB)</label>
+                <input type="number" class="form-control" id="almacenamiento" th:field="*{almacenamiento}">
+            </div>
+            <div class="mb-3">
+                <label for="nombreCpu" class="form-label">CPU</label>
+                <input type="text" class="form-control" id="nombreCpu" th:field="*{nombreCpu}">
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            <a th:href="@{/ventas/detalle/{id}(id=${telefono.id})}" class="btn btn-secondary ms-2">Cancelar</a>
+        </form>
+    </div>
+    <div id="chat-button">
+        <img src="https://i1.sndcdn.com/avatars-zaCUjzWzmpQ5cqzn-4EqdxQ-t1080x1080.jpg" alt="Abrir chat de asistente" draggable="false">
+    </div>
+
+
+    <div id="chat-overlay"></div>
+
+
+    <div id="chat-modal">
+        <button id="close-chat">Cerrar</button>
+        <div id="chat-iframe-container">
+            <iframe id="chat-iframe" src="asistente.html"></iframe>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: <a href="mailto:support@cellfinder.com">support@cellfinder.com</a></p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const logoutBtn = document.getElementById('logout-btn');
+            const logoutBox = document.getElementById('logout-box');
+            const yesBtn = logoutBox.querySelector('.yes-btn');
+            const noBtn = logoutBox.querySelector('.no-btn');
+            logoutBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                logoutBox.classList.toggle('visible');
+            });
+            document.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+            logoutBox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            yesBtn.addEventListener('click', function() {
+                window.location.href = '/logout';
+            });
+            noBtn.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+        });
+        const chatButton = document.getElementById('chat-button');
+        let isDragging = false;
+        let hasMoved = false;
+        let currentX, currentY, initialX, initialY;
+
+        chatButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            initialX = e.clientX - chatButton.getBoundingClientRect().left;
+            initialY = e.clientY - chatButton.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                hasMoved = true;
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                chatButton.style.left = `${currentX}px`;
+                chatButton.style.right = 'auto';
+                chatButton.style.top = `${currentY}px`;
+                chatButton.style.bottom = 'auto';
+            }
+        }
+
+        function stopDrag(e) {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            if (!hasMoved) {
+                openModal();
+            }
+        }
+
+        function openModal() {
+            const chatModal = document.getElementById('chat-modal');
+            const chatOverlay = document.getElementById('chat-overlay');
+            chatModal.style.display = 'block';
+            chatOverlay.style.display = 'block';
+            document.getElementById('chat-iframe').src = document.getElementById('chat-iframe').src;
+        }
+
+        const chatModal = document.getElementById('chat-modal');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const closeChat = document.getElementById('close-chat');
+
+        closeChat.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+
+        chatOverlay.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

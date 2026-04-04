@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Inputs bonitos</title>
+<style>
+    body {
+        background: #f2f4f8;
+        font-family: "Segoe UI", sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+
+    .form-container {
+        background: white;
+        padding: 25px;
+        border-radius: 16px;
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        width: 350px;
+    }
+
+    .form-group {
+        margin-bottom: 18px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    label {
+        font-size: 14px;
+        margin-bottom: 6px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    /* INPUT TEXT & SELECT */
+    input[type="text"], select {
+        padding: 12px;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        font-size: 15px;
+        transition: 0.25s;
+        outline: none;
+        background: #fafafa;
+    }
+
+    input[type="text"]:focus, select:focus {
+        border-color: #4E92F7;
+        box-shadow: 0 0 0 3px rgba(78,146,247,0.25);
+        background: #fff;
+    }
+
+    /* INPUT FILE CUSTOM */
+    .file-input {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .file-input input[type="file"] {
+        opacity: 0;
+        position: absolute;
+        width: 100%;
+        height: 45px;
+        cursor: pointer;
+    }
+
+    .file-label {
+        background: #4E92F7;
+        color: white;
+        padding: 12px;
+        border-radius: 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.25s;
+        font-size: 15px;
+    }
+
+    .file-label:hover {
+        background: #2f6ed1;
+    }
+
+    .file-name {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #555;
+        font-style: italic;
+    }
+</style>
+</head>
+<body>
+
+<div class="form-container">
+    <div class="form-group">
+        <label>Nombre</label>
+        <input type="text" placeholder="Escribe tu nombre...">
+    </div>
+
+    <div class="form-group">
+        <label>Selecciona una opción</label>
+        <select>
+            <option value="">-- Seleccionar --</option>
+            <option>Opción 1</option>
+            <option>Opción 2</option>
+            <option>Opción 3</option>
+        </select>
+    </div>
+
+    <div class="form-group file-input">
+        <label>Subir archivo</label>
+        <input type="file" id="archivo">
+        <div class="file-label">Elegir archivo</div>
+        <div class="file-name" id="file-name">Ningún archivo seleccionado</div>
+    </div>
+</div>
+
+<script>
+    // Mostrar el nombre del archivo seleccionado
+    const archivo = document.getElementById("archivo");
+    const fileName = document.getElementById("file-name");
+
+    archivo.addEventListener("change", () => {
+        fileName.textContent = archivo.files.length > 0 
+            ? archivo.files[0].name 
+            : "Ningún archivo seleccionado";
+    });
+</script>
+
+</body>
+</html>

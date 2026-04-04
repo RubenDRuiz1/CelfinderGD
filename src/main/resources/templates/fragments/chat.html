@@ -1,0 +1,285 @@
+<div th:fragment="floating-chat" id="celfinder-chat-container">
+    <!-- Botón Flotante -->
+    <button id="chat-toggle-btn" class="chat-bubble">
+        <i class="fas fa-robot"></i>
+    </button>
+
+    <!-- Ventana de Chat -->
+    <div id="chat-window" class="chat-window hidden">
+        <div class="chat-header">
+            <div class="header-info">
+                <i class="fas fa-robot"></i>
+                <span>Asistente CelFinder</span>
+            </div>
+            <button id="chat-close-btn">&times;</button>
+        </div>
+        
+        <div id="chat-messages" class="chat-messages">
+            <!-- Los mensajes se cargarán aquí -->
+            <div class="message assistant">
+                ¡Hola! Soy tu asistente de CelFinder. ¿En qué puedo ayudarte hoy?
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="chat-input" placeholder="Escribe tu mensaje..." autocomplete="off">
+            <button id="chat-send-btn">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+
+    <style>
+        :root {
+            --chat-primary: #3498db;
+            --chat-bg: rgba(255, 255, 255, 0.9);
+            --chat-text: #2c3e50;
+            --chat-glass: rgba(255, 255, 255, 0.15);
+        }
+
+        #celfinder-chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .chat-bubble {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .chat-bubble:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .chat-window {
+            position: absolute;
+            bottom: 80px;
+            right: 0;
+            width: 350px;
+            height: 500px;
+            background: var(--chat-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            transform-origin: bottom right;
+        }
+
+        .chat-window.hidden {
+            opacity: 0;
+            transform: scale(0.8) translateY(20px);
+            pointer-events: none;
+        }
+
+        .chat-header {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #chat-close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(240, 242, 245, 0.8);
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background: #3498db;
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+
+        .message.assistant {
+            align-self: flex-start;
+            background: white;
+            color: var(--chat-text);
+            border-bottom-left-radius: 2px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .chat-input-area {
+            padding: 15px;
+            background: white;
+            display: flex;
+            gap: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        #chat-input {
+            flex: 1;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            padding: 8px 15px;
+            outline: none;
+            font-size: 14px;
+        }
+
+        #chat-send-btn {
+            background: #3498db;
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s ease;
+        }
+
+        #chat-send-btn:hover {
+            background: #2980b9;
+        }
+
+        /* Typing indicator effect */
+        .typing {
+            font-style: italic;
+            opacity: 0.7;
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggleBtn = document.getElementById('chat-toggle-btn');
+            const windowEl = document.getElementById('chat-window');
+            const closeBtn = document.getElementById('chat-close-btn');
+            const sendBtn = document.getElementById('chat-send-btn');
+            const inputEl = document.getElementById('chat-input');
+            const messagesEl = document.getElementById('chat-messages');
+
+            let historyLoaded = false;
+
+            toggleBtn.addEventListener('click', () => {
+                windowEl.classList.toggle('hidden');
+                if (!windowEl.classList.contains('hidden') && !historyLoaded) {
+                    cargarHistorial();
+                }
+            });
+
+            closeBtn.addEventListener('click', () => {
+                windowEl.classList.add('hidden');
+            });
+
+            const scrollChat = () => {
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            };
+
+            const addMessage = (text, role) => {
+                const div = document.createElement('div');
+                div.className = `message ${role}`;
+                div.innerText = text;
+                messagesEl.appendChild(div);
+                scrollChat();
+            };
+
+            const cargarHistorial = async () => {
+                try {
+                    const res = await fetch('/api/chat/historial');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.length > 0) {
+                            messagesEl.innerHTML = ''; // Limpiar el saludo por defecto si hay historial
+                            data.forEach(msg => addMessage(msg.contenido, msg.rol));
+                        }
+                        historyLoaded = true;
+                    }
+                } catch (e) {
+                    console.error("Error cargando historial", e);
+                }
+            };
+
+            const enviarMensaje = async () => {
+                const texto = inputEl.value.trim();
+                if (!texto) return;
+
+                inputEl.value = '';
+                addMessage(texto, 'user');
+
+                // Indicador de "escribiendo..."
+                const typingId = 'typing-' + Date.now();
+                const typingDiv = document.createElement('div');
+                typingDiv.id = typingId;
+                typingDiv.className = 'message assistant typing';
+                typingDiv.innerText = 'El asistente está pensando...';
+                messagesEl.appendChild(typingDiv);
+                scrollChat();
+
+                try {
+                    const res = await fetch('/api/chat/preguntar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ mensaje: texto })
+                    });
+
+                    typingDiv.remove();
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        addMessage(data.respuesta, 'assistant');
+                    } else {
+                        addMessage('Lo siento, hubo un error procesando tu solicitud.', 'assistant');
+                    }
+                } catch (e) {
+                    typingDiv.remove();
+                    addMessage('Error de conexión con el servidor.', 'assistant');
+                }
+            };
+
+            sendBtn.addEventListener('click', enviarMensaje);
+            inputEl.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') enviarMensaje();
+            });
+        });
+    </script>
+</div>

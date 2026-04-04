@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Mi Panel de Vendedor')}"></head>
+<style>
+    body { background-color: #f4f7f6; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+    .dashboard-container { max-width: 1200px; margin: 40px auto; padding: 0 20px; flex: 1; }
+    
+    .stats-card { background: #fff; border-radius: 12px; padding: 20px; border-left: 5px solid #3498db; box-shadow: 0 4px 15px rgba(0,0,0,0.03); display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
+    .stats-card.revenue { border-left-color: #2ecc71; }
+    .stats-card.total { border-left-color: #9b59b6; }
+    
+    .stats-icon { width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+    .stats-icon.blue { background: rgba(52, 152, 219, 0.1); color: #3498db; }
+    .stats-icon.green { background: rgba(46, 204, 113, 0.1); color: #2ecc71; }
+    .stats-icon.purple { background: rgba(155, 89, 182, 0.1); color: #9b59b6; }
+
+    .inventory-panel { background: #fff; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); overflow: hidden; }
+    .panel-header { padding: 25px 30px; border-bottom: 1px solid #f0f2f5; display: flex; justify-content: space-between; align-items: center; }
+    
+    .table-prod-img { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; border: 1px solid #e9ecef; }
+    .table-placeholder { width: 45px; height: 45px; border-radius: 8px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; color: #adb5bd; }
+    
+    .table > :not(caption) > * > * { padding: 15px 20px; border-bottom-color: #f0f2f5; }
+    .table tbody tr { transition: all 0.2s; }
+    .table tbody tr:hover { background-color: #f8fcff; }
+    
+    .price-col { font-weight: 700; color: #2c3e50; }
+    .discount-badge-sm { background: #e6fcf5; color: #0ca678; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; margin-left: 5px; }
+
+    .badge-status { padding: 6px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+    .status-disponible { background: #e1f5fe; color: #0288d1; border: 1px solid #b3e5fc; }
+    .status-agotado { background: #ffebee; color: #d32f2f; border: 1px solid #ffcdd2; }
+    .status-vendido { background: #e8f5e9; color: #388e3c; border: 1px solid #c8e6c9; }
+    .status-reservado { background: #fff3e0; color: #f57c00; border: 1px solid #ffe0b2; }
+    
+    .btn-action { width: 35px; height: 35px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; transition: all 0.2s; }
+    .btn-action.view { background: #e3f2fd; color: #1976d2; }
+    .btn-action.view:hover { background: #1976d2; color: #fff; }
+    .btn-action.edit { background: #fff3e0; color: #f57c00; margin-left: 5px; }
+    .btn-action.edit:hover { background: #f57c00; color: #fff; }
+</style>
+<body>
+
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="dashboard-container">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bolder text-dark mb-1">Mi Panel de Vendedor</h2>
+            <p class="text-muted mb-0">Bienvenido de nuevo, <span class="fw-bold" th:text="${nombreVendedor}"></span></p>
+        </div>
+        <a href="/ventas/publicar" class="btn btn-primary fw-bold shadow-sm px-4 py-2" style="border-radius:50px">
+            <i class="fas fa-plus me-2"></i>Nuevo Producto
+        </a>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger shadow-sm rounded-3 border-0 py-3"><i class="fas fa-exclamation-circle me-2"></i>[[${error}]]</div>
+    <div th:if="${mensaje}" class="alert alert-success shadow-sm rounded-3 border-0 py-3"><i class="fas fa-check-circle me-2"></i>[[${mensaje}]]</div>
+
+    <!-- ESTADÍSTICAS RÁPIDAS -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div>
+                    <h6 class="text-muted fw-bold mb-1 text-uppercase" style="font-size:0.8rem">Productos Totales</h6>
+                    <h3 class="fw-bolder text-dark mb-0" th:text="${totalElements}">0</h3>
+                </div>
+                <div class="stats-icon blue"><i class="fas fa-box"></i></div>
+            </div>
+        </div>
+        <!-- Nota: En un sistema real estos valores se calculan en el backend. 
+             Por ahora usamos visualización de los que están como 'VENDIDO' en la lista paginada como aproximación o dejamos un tracker estático si no está agrupado -->
+        <div class="col-md-4">
+            <div class="stats-card total">
+                <div>
+                    <h6 class="text-muted fw-bold mb-1 text-uppercase" style="font-size:0.8rem">Catálogo Activo</h6>
+                    <h3 class="fw-bolder text-dark mb-0">Activos</h3>
+                </div>
+                <div class="stats-icon purple"><i class="fas fa-store"></i></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card revenue">
+                <div>
+                    <h6 class="text-muted fw-bold mb-1 text-uppercase" style="font-size:0.8rem">Ventas Registradas</h6>
+                    <h3 class="fw-bolder text-dark mb-0"><i class="fas fa-chart-line text-success fs-5"></i></h3>
+                </div>
+                <div class="stats-icon green"><i class="fas fa-hand-holding-usd"></i></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL PRINCIPAL (TABLA) -->
+    <div class="inventory-panel mb-5">
+        <div class="panel-header">
+            <h5 class="fw-bold mb-0 text-dark"><i class="fas fa-list-ul text-primary me-2"></i>Inventario Detallado</h5>
+        </div>
+        
+        <div th:if="${productos == null or productos.isEmpty()}" class="text-center py-5 bg-white">
+            <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width:80px;height:80px">
+                <i class="fas fa-box-open fa-2x text-muted"></i>
+            </div>
+            <h5 class="text-muted fw-bold">Aún no tienes productos en tu inventario</h5>
+            <p class="text-muted small mb-4">Publica tu primer producto para empezar a vender.</p>
+        </div>
+
+        <div th:if="${productos != null and !productos.isEmpty()}" class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead class="bg-light text-muted" style="font-size: 0.85rem; text-transform: uppercase;">
+                    <tr>
+                        <th class="ps-4">Producto</th>
+                        <th>Precio (COP)</th>
+                        <th>Stock</th>
+                        <th>Estado</th>
+                        <th>Fecha Pub.</th>
+                        <th class="text-end pe-4">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="producto : ${productos}">
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <img th:if="${producto.imagenBase64 != null and !producto.imagenBase64.isEmpty()}" 
+                                     th:src="@{'data:image/jpeg;base64,' + ${producto.imagenBase64}}" 
+                                     class="table-prod-img me-3">
+                                <div th:unless="${producto.imagenBase64 != null and !producto.imagenBase64.isEmpty()}" 
+                                     class="table-placeholder me-3"><i class="fas fa-image"></i></div>
+                                <div>
+                                    <h6 class="fw-bold text-dark mb-0 text-truncate" style="max-width:250px" title="${producto.nombre}" th:text="${producto.nombre}"></h6>
+                                    <small class="text-muted" th:text="${producto.categoria ?: 'Sin categoría'}"></small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="price-col" th:text="${'$' + #numbers.formatDecimal(producto.precioFinal != null ? producto.precioFinal : producto.precio, 0, 'COMMA', 0, 'POINT')}"></div>
+                            <div th:if="${producto.descuento != null and producto.descuento > 0}" class="d-flex align-items-center mt-1">
+                                <small class="text-decoration-line-through text-muted" style="font-size:0.75rem" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></small>
+                                <span class="discount-badge-sm">-[[${producto.descuento}]]%</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="fw-bold" th:classappend="${producto.stock > 0 ? 'text-primary' : 'text-danger'}" th:text="${producto.stock}"></span>
+                            <small class="text-muted"> un.</small>
+                        </td>
+                        <td>
+                            <span class="badge-status" 
+                                  th:classappend="${producto.estadoVenta == null ? 'status-disponible' :
+                                                   producto.estadoVenta.equalsIgnoreCase('VENDIDO') ? 'status-vendido' :
+                                                   producto.estadoVenta.equalsIgnoreCase('AGOTADO') ? 'status-agotado' :
+                                                   producto.estadoVenta.equalsIgnoreCase('RESERVADO') ? 'status-reservado' : 'status-disponible'}"
+                                  th:text="${producto.estadoVenta ?: 'DISPONIBLE'}">DISPONIBLE</span>
+                        </td>
+                        <td>
+                            <div class="text-muted small fw-medium">
+                                <i class="far fa-calendar-alt me-1"></i>
+                                <span th:text="${producto.fechaPublicacion != null ? #temporals.format(producto.fechaPublicacion, 'dd/MM/yyyy') : '-'}"></span>
+                            </div>
+                        </td>
+                        <td class="text-end pe-4">
+                            <!-- Solo permitir editar si no está VENDIDO -->
+                            <a th:href="@{'/ventas/detalle/' + ${producto.id}}" class="btn-action view" title="Ver Detalle">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                            <a th:if="${producto.estadoVenta == null or !producto.estadoVenta.equalsIgnoreCase('VENDIDO')}" 
+                               th:href="@{'/ventas/editar/' + ${producto.id}}" class="btn-action edit" title="Editar Producto">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Paginación -->
+    <nav th:if="${totalPages != null and totalPages > 1}" class="mt-4 mb-5">
+        <ul class="pagination justify-content-center">
+            <li class="page-item" th:classappend="${page == 0 ? 'disabled' : ''}">
+                <a class="page-link shadow-sm" th:href="@{/mi-inventario(page=${page-1}, size=10)}"><i class="fas fa-chevron-left"></i></a>
+            </li>
+            <th:block th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+                <li class="page-item" th:classappend="${i == page ? 'active' : ''}">
+                    <a class="page-link shadow-sm fw-bold" th:href="@{/mi-inventario(page=${i}, size=10)}" th:text="${i + 1}"></a>
+                </li>
+            </th:block>
+            <li class="page-item" th:classappend="${page >= totalPages - 1 ? 'disabled' : ''}">
+                <a class="page-link shadow-sm" th:href="@{/mi-inventario(page=${page+1}, size=10)}"><i class="fas fa-chevron-right"></i></a>
+            </li>
+        </ul>
+    </nav>
+</main>
+
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container text-center">
+        <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+        <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com | +57 3126409354</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+</body>
+</html>

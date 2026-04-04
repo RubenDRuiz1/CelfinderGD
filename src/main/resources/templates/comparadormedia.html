@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CellFinder TechMatch</title>
+    <link rel="icon" href="icono.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .logo-container img {
+            height: 70px;
+            width: auto;
+            transition: transform 0.3s;
+        }
+        .logo-container:hover img {
+            transform: scale(1.05);
+        }
+        .menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu li a, .logout-btn {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .menu li a:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .logout-btn {
+            background-color: #00000000;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .logout-btn:hover {
+            background-color: #c0392b;
+            transform: translateY(-2px);
+        }
+        .logout-box {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            z-index: 1000;
+            text-align: center;
+        }
+        .logout-box.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logout-box p {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .logout-box button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-box .yes-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .logout-box .yes-btn:hover {
+            background-color: #c0392b;
+        }
+        .logout-box .no-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .logout-box .no-btn:hover {
+            background-color: #2980b9;
+        }
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            position: relative;
+        }
+        .input-group label {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            transform: translateY(-50%);
+            transition: all 0.3s ease;
+            color: #2c3e50;
+            pointer-events: none;
+            opacity: 1;
+            z-index: 1;
+        }
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            background-color: transparent;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            color: #2c3e50;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 2;
+        }
+        .input-group input:focus {
+            background-color: white;
+            color: #2c3e50;
+            outline: none;
+            border-color: #3498db;
+        }
+        .input-group input:focus + label,
+        .input-group input:not(:placeholder-shown) + label {
+            top: -10px;
+            left: 5px;
+            font-size: 12px;
+            color: #3498db;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        button.primary {
+            background-color: #3498db;
+            color: white;
+        }
+        button.primary:hover {
+            background-color: #2980b9;
+        }
+        button.secondary {
+            background-color: #e74c3c;
+            color: white;
+        }
+        button.secondary:hover {
+            background-color: #c0392b;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            margin-top: 30px;
+        }
+        .footer-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        #chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            transition: transform 0.2s;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #chat-button:hover {
+            transform: scale(1.1);
+        }
+
+        #chat-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+        }
+
+        #chat-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            height: 80%;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        #chat-iframe-container {
+            width: 100%;
+            height: calc(100% - 40px);
+        }
+
+        #chat-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #close-chat {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #close-chat:hover {
+            background-color: #c82333;
+        }
+
+
+        #chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="icons/celfinder logo nombre.png" alt="Logo CellFinder" class="logo">
+        </div>
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/ventas/listar">Mercado</a></li>
+                <li><a href="/ventas/notificaciones">Notificaciones</a></li>
+                <li class="logout-item">
+                    <button id="logout-btn" class="logout-btn">Cerrar Sesión</button>
+                    <div class="logout-box" id="logout-box">
+                        <p>¿Estás seguro de cerrar sesión?</p>
+                        <button class="yes-btn">Sí</button>
+                        <button class="no-btn">No</button>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <h2>Registro de Celular</h2>
+        <form action="/compararmedia/registrar" method="post">
+            <div class="input-group">
+                <label for="nombre">Nombre del Celular:</label>
+                <input type="text" id="nombre" name="nombre" required>
+            </div>
+            <div class="input-group">
+                <label for="nombreCpu">Nombre del CPU:</label>
+                <input type="text" id="nombreCpu" name="nombreCpu" required>
+            </div>
+            <div class="input-group">
+                <label for="ghz">Frecuencia (GHz):</label>
+                <input type="number" step="0.1" id="ghz" name="ghz" required>
+            </div>
+            <div class="input-group">
+                <label for="camara">Cantidad de Cámaras:</label>
+                <input type="number" id="camara" name="camara" required>
+            </div>
+            <div class="input-group">
+                <label for="ram">Cantidad de RAM (GB):</label>
+                <input type="number" id="ram" name="ram" required>
+            </div>
+            <div class="input-group">
+                <label for="bateria">Capacidad de Batería (mAh):</label>
+                <input type="number" id="bateria" name="bateria" required>
+            </div>
+            <div class="input-group">
+                <label for="almacenamiento">Capacidad de Almacenamiento (GB):</label>
+                <input type="number" id="almacenamiento" name="almacenamiento" required>
+            </div>
+            <button type="submit" class="primary">Registrar Celular</button>
+        </form>
+        <div style="margin-top: 20px;">
+            <a href="/menu"><button class="secondary">Volver</button></a>
+        </div>
+    </div>
+    <div id="chat-button">
+        <img src="https://i1.sndcdn.com/avatars-zaCUjzWzmpQ5cqzn-4EqdxQ-t1080x1080.jpg" alt="Abrir chat de asistente" draggable="false">
+    </div>
+
+    <div id="chat-overlay"></div>
+
+    <div id="chat-modal">
+        <button id="close-chat">Cerrar</button>
+        <div id="chat-iframe-container">
+            <iframe id="chat-iframe" src="asistente.html"></iframe>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: edderespitia@gmail.com</p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+    </footer>
+
+    <script src="https://raw.githubusercontent.com/Rdrr01/celfinder-resource/refs/heads/main/scriptcc.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Logout functionality
+            const logoutBtn = document.getElementById('logout-btn');
+            const logoutBox = document.getElementById('logout-box');
+            const yesBtn = logoutBox.querySelector('.yes-btn');
+            const noBtn = logoutBox.querySelector('.no-btn');
+            logoutBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                logoutBox.classList.toggle('visible');
+            });
+            document.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+            logoutBox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+            yesBtn.addEventListener('click', function() {
+                window.location.href = '/logout';
+            });
+            noBtn.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+        });
+
+        function inicio() {
+            alert('Inicio');
+        }
+        const chatButton = document.getElementById('chat-button');
+        let isDragging = false;
+        let hasMoved = false;
+        let currentX, currentY, initialX, initialY;
+
+        chatButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            initialX = e.clientX - chatButton.getBoundingClientRect().left;
+            initialY = e.clientY - chatButton.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                hasMoved = true;
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                chatButton.style.left = `${currentX}px`;
+                chatButton.style.right = 'auto';
+                chatButton.style.top = `${currentY}px`;
+                chatButton.style.bottom = 'auto';
+            }
+        }
+
+        function stopDrag(e) {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            if (!hasMoved) {
+                openModal();
+            }
+        }
+
+        function openModal() {
+            const chatModal = document.getElementById('chat-modal');
+            const chatOverlay = document.getElementById('chat-overlay');
+            chatModal.style.display = 'block';
+            chatOverlay.style.display = 'block';
+            document.getElementById('chat-iframe').src = document.getElementById('chat-iframe').src;
+        }
+
+        const chatModal = document.getElementById('chat-modal');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const closeChat = document.getElementById('close-chat');
+
+        closeChat.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+
+        chatOverlay.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Publicar Producto')}"></head>
+<style>
+    body { background-color: #f4f6f9; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+    .main-container { max-width: 900px; margin: 40px auto; }
+    .form-card { background: #fff; border-radius: 16px; padding: 40px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .section-title { font-weight: 800; color: #2c3e50; margin-bottom: 25px; position: relative; padding-bottom: 10px; border-bottom: 2px solid #f0f2f5; }
+    .section-title::after { content: ''; position: absolute; left: 0; bottom: -2px; height: 2px; width: 50px; background: #3498db; }
+    
+    .form-label { font-weight: 600; color: #495057; font-size: 0.9rem; }
+    .form-control, .form-select { border-radius: 8px; border: 1px solid #ced4da; padding: 12px 15px; font-size: 0.95rem; background-color: #f8f9fa; transition: all 0.3s; }
+    .form-control:focus, .form-select:focus { background-color: #fff; border-color: #3498db; box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25); }
+    
+    .file-upload-wrapper { position: relative; width: 100%; height: 150px; border: 2px dashed #ced4da; border-radius: 12px; background: #f8f9fa; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: all 0.3s; cursor: pointer; }
+    .file-upload-wrapper:hover { border-color: #3498db; background: #f1f5f9; }
+    .file-upload-input { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    
+    .spec-container { background: #f8f9fa; border-radius: 12px; padding: 25px; margin-top: 10px; border: 1px solid #e9ecef; }
+    
+    .btn-publish { background: #0069d9; border: none; font-weight: 700; font-size: 1.1rem; padding: 15px; border-radius: 8px; transition: all 0.3s; color: white; width: 100%; margin-top: 20px; }
+    .btn-publish:hover { background: #0056b3; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,105,217,0.3); color: white; }
+</style>
+<body>
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="container main-container flex-grow-1">
+    <div th:if="${error}" class="alert alert-danger shadow-sm rounded-3" th:text="${error}"></div>
+    <div th:if="${mensaje}" class="alert alert-success shadow-sm rounded-3" th:text="${mensaje}"></div>
+
+    <div class="form-card">
+        <div class="text-center mb-5">
+            <h2 class="fw-bolder text-dark">Publicar Nuevo Producto</h2>
+            <p class="text-muted">Completa los detalles para añadir el producto a tu inventario</p>
+        </div>
+
+        <form th:action="@{/ventas/publicar}" method="post" th:object="${producto}" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+
+            <!-- SECCIÓN BÁSICA -->
+            <h4 class="section-title"><i class="fas fa-info-circle text-primary me-2"></i>Información Básica</h4>
+            
+            <div class="row g-4 mb-4">
+                <div class="col-md-12">
+                    <label class="form-label">Nombre del Producto <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" th:field="*{nombre}" required placeholder="Ej: iPhone 13 Pro Max 256GB">
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Marca <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" th:field="*{marca}" required placeholder="Ej: Apple, Samsung, LG">
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label">Condición <span class="text-danger">*</span></label>
+                    <select class="form-select" th:field="*{estado}" required>
+                        <option value="">Selecciona la condición</option>
+                        <option value="nuevo">Nuevo</option>
+                        <option value="usado">Usado</option>
+                        <option value="reacondicionado">Reacondicionado</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Precio ($ COP) <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" th:field="*{precio}" min="30000" step="1" required placeholder="Min: 30000">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Stock <span class="text-danger">*</span></label>
+                    <input type="number" class="form-control" th:field="*{stock}" min="1" step="1" required placeholder="Unidades disponibles">
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label">Descuento (%) <small class="text-muted">(Opcional)</small></label>
+                    <input type="number" class="form-control" th:field="*{descuento}" min="0" max="100" placeholder="Ej: 15">
+                </div>
+
+                <div class="col-md-12">
+                    <label class="form-label">Descripción Detallada</label>
+                    <textarea class="form-control" th:field="*{descripcion}" rows="4" placeholder="Describe el estado del producto, accesorios incluidos, garantía, etc..."></textarea>
+                </div>
+            </div>
+
+            <!-- SECCIÓN IMÁGENES -->
+            <h4 class="section-title mt-5"><i class="fas fa-camera text-primary me-2"></i>Imágenes</h4>
+            <div class="mb-4">
+                <label class="form-label">Imagen Principal <span class="text-danger">*</span></label>
+                <div class="file-upload-wrapper">
+                    <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-2"></i>
+                    <span class="fw-bold text-muted" id="file-name-text">Haz clic o arrastra una imagen aquí</span>
+                    <input type="file" class="file-upload-input" id="imagen" name="imagen" accept="image/*" required onchange="updateFileName(this)">
+                </div>
+            </div>
+
+            <!-- SECCIÓN CATEGORÍA Y ESPESIFICACIONES DINÁMICAS -->
+            <h4 class="section-title mt-5"><i class="fas fa-list text-primary me-2"></i>Características Técnicas</h4>
+            <div class="mb-4">
+                <label class="form-label">Categoría Principal <span class="text-danger">*</span></label>
+                <select id="categoriaSelect" name="categoria" class="form-select" onchange="cargarCamposDinamicos()" required>
+                    <option value="">Seleccione una categoría</option>
+                    <th:block th:each="grupoEntry : ${categoriasAgrupadas}">
+                        <optgroup th:label="${grupoEntry.key}">
+                            <option th:each="cat : ${grupoEntry.value}" th:value="${cat.nombre}" th:text="${cat.nombre}"></option>
+                        </optgroup>
+                    </th:block>
+                </select>
+            </div>
+
+            <!-- CONTENEDOR PARA LAS ESPECIFICACIONES DINÁMICAS (AJAX) -->
+            <div id="dynamic-fields-container" style="display: none;">
+                <!-- Aquí se inyectan los campos -->
+            </div>
+
+            <button type="submit" class="btn btn-publish shadow-sm mt-5">
+                <i class="fas fa-paper-plane me-2"></i>Publicar Producto
+            </button>
+        </form>
+    </div>
+</main>
+
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container text-center">
+        <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+        <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com | +57 3126409354</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+<script>
+    function updateFileName(input) {
+        const textElement = document.getElementById('file-name-text');
+        if (input.files && input.files[0]) {
+            textElement.textContent = input.files[0].name;
+            textElement.classList.add('text-primary');
+        } else {
+            textElement.textContent = 'Haz clic o arrastra una imagen aquí';
+            textElement.classList.remove('text-primary');
+        }
+    }
+
+    function cargarCamposDinamicos() {
+        const categoria = document.getElementById('categoriaSelect').value;
+        const container = document.getElementById('dynamic-fields-container');
+        
+        if (!categoria) {
+            container.style.display = 'none';
+            container.innerHTML = '';
+            return;
+        }
+        
+        // Mostrar estado de carga
+        container.style.display = 'block';
+        container.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin fa-2x text-primary mb-2"></i><p class="text-muted">Cargando características de ' + categoria + '...</p></div>';
+        
+        // Fetch desde el API
+        fetch('/admin/categorias/api/especificaciones-nombre/' + encodeURIComponent(categoria))
+            .then(response => {
+                if (!response.ok) throw new Error('Error de red');
+                return response.json();
+            })
+            .then(specs => {
+                if (!specs || specs.length === 0) {
+                    container.innerHTML = '<div class="alert alert-info border-0 shadow-sm"><i class="fas fa-info-circle me-2"></i>Esta categoría no requiere características adicionales obligatorias.</div>';
+                    return;
+                }
+                
+                let html = '<div class="spec-container">';
+                html += '<h5 class="fw-bold text-dark mb-4 border-bottom pb-2">Detalles de ' + categoria + '</h5>';
+                html += '<div class="row g-4">';
+                
+                specs.forEach(spec => {
+                    // Backend espera que los nombres de los atributos de especificación empiecen por "spec_"
+                    const inputName = 'spec_' + spec.nombre;
+                    const required = spec.obligatorio ? 'required' : '';
+                    const asterisk = spec.obligatorio ? ' <span class="text-danger">*</span>' : '';
+                    
+                    let inputHtml = '';
+                    
+                    if (spec.tipo === 'ENUM' && spec.opciones && spec.opciones.length > 0) {
+                        inputHtml = '<select class="form-select" name="' + inputName + '" ' + required + '>';
+                        inputHtml += '<option value="">Seleccione...</option>';
+                        spec.opciones.forEach(opt => {
+                            inputHtml += '<option value="' + opt + '">' + opt + '</option>';
+                        });
+                        inputHtml += '</select>';
+                    } else if (spec.tipo === 'BOOLEAN') {
+                        // Para booleanos, en thymeleaf/spring un checkbox no enviado no aparece en el Map, lo cual es correcto.
+                        inputHtml = '<div class="form-check mt-1">';
+                        inputHtml += '<input class="form-check-input" type="checkbox" name="' + inputName + '" value="Sí" id="chk_' + spec.nombre + '">';
+                        inputHtml += '<label class="form-check-label" for="chk_' + spec.nombre + '">Sí</label>';
+                        inputHtml += '</div>';
+                    } else {
+                        const typeMap = { 'NUMERO': 'text', 'TEXTO': 'text' }; // Usamos text para ambos por flexibilidad, a menos que se quiera number estricto.
+                        const type = typeMap[spec.tipo] || 'text';
+                        inputHtml = '<input type="' + type + '" class="form-control" name="' + inputName + '" ' + required + ' placeholder="Ej: ' + (spec.tipo==='NUMERO'?'123':'...') + '">';
+                    }
+                    
+                    html += '<div class="col-md-6">';
+                    html += '<label class="form-label text-muted small">' + spec.nombre + asterisk + '</label>';
+                    html += inputHtml;
+                    html += '</div>';
+                });
+                
+                html += '</div></div>';
+                container.innerHTML = html;
+            })
+            .catch(err => {
+                console.error("Error cargando especificaciones:", err);
+                container.innerHTML = '<div class="alert alert-warning"><i class="fas fa-exclamation-triangle me-2"></i>No se pudieron cargar las características adicionales. <button type="button" class="btn btn-sm btn-link" onclick="cargarCamposDinamicos()">Reintentar</button></div>';
+            });
+    }
+
+    // Inicializar campos si la categoría ya está seleccionada (p. ej en recarga por error de validación)
+    document.addEventListener('DOMContentLoaded', () => {
+        if (document.getElementById('categoriaSelect').value) {
+            cargarCamposDinamicos();
+        }
+    });
+</script>
+</body>
+</html>

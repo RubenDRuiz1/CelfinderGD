@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/head-config :: head-config('Editar Categoría - Celfinder')}"></head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+    
+    <div class="container my-5" style="max-width: 800px; flex: 1;">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2 class="fw-bold text-dark mb-0"><i class="fas fa-edit text-primary me-2"></i>Editar Categoría</h2>
+                    <a th:href="@{/admin/categorias}" class="btn btn-outline-secondary btn-sm"><i class="fas fa-arrow-left me-1"></i>Volver</a>
+                </div>
+            </div>
+            
+            <div class="card-body p-4">
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                
+                <form th:action="@{/admin/categorias/actualizar}" method="post" id="categoriaForm">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <input type="hidden" name="id" th:value="${categoria.id}"/>
+                    <input type="hidden" name="creadaPor" th:value="${categoria.creadaPor}"/>
+                    <input type="hidden" name="fechaCreacion" th:value="${categoria.fechaCreacion}"/>
+                    <input type="hidden" name="activa" th:value="${categoria.activa}"/>
+                    
+                    <div class="row mb-4">
+                        <div class="col-md-7">
+                            <label for="nombre" class="form-label fw-bold">Nombre de la Categoría <span class="text-danger">*</span></label>
+                            <input type="text" id="nombre" name="nombre" class="form-control" th:value="${categoria.nombre}" required>
+                            <div class="form-text">Este nombre aparecerá en el formulario de publicación.</div>
+                        </div>
+                        <div class="col-md-5">
+                            <label for="icono" class="form-label fw-bold">Icono (Emoji)</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">😃</span>
+                                <input type="text" id="icono" name="icono" class="form-control" th:value="${categoria.icono}" maxlength="2">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="grupo" class="form-label fw-bold">Grupo <span class="text-danger">*</span></label>
+                        <select id="grupo" name="grupo" class="form-select" required>
+                            <option value="">Selecciona un grupo</option>
+                            <option value="Smartphones y Tablets" th:selected="${categoria.grupo == 'Smartphones y Tablets'}">📱 Smartphones y Tablets</option>
+                            <option value="Computadoras" th:selected="${categoria.grupo == 'Computadoras'}">💻 Computadoras</option>
+                            <option value="Componentes de PC" th:selected="${categoria.grupo == 'Componentes de PC'}">🖥️ Componentes de PC</option>
+                            <option value="Periféricos" th:selected="${categoria.grupo == 'Periféricos'}">🖨️ Periféricos</option>
+                            <option value="Gaming" th:selected="${categoria.grupo == 'Gaming'}">🎮 Gaming</option>
+                            <option value="Audio" th:selected="${categoria.grupo == 'Audio'}">🎧 Audio</option>
+                            <option value="Fotografía y Video" th:selected="${categoria.grupo == 'Fotografía y Video'}">📷 Fotografía y Video</option>
+                            <option value="TV y Entretenimiento" th:selected="${categoria.grupo == 'TV y Entretenimiento'}">📺 TV y Entretenimiento</option>
+                            <option value="Smart Home" th:selected="${categoria.grupo == 'Smart Home'}">🏠 Smart Home</option>
+                            <option value="Redes y Conectividad" th:selected="${categoria.grupo == 'Redes y Conectividad'}">🔌 Redes y Conectividad</option>
+                            <option value="Energía y Accesorios" th:selected="${categoria.grupo == 'Energía y Accesorios'}">🔋 Energía y Accesorios</option>
+                            <option value="Almacenamiento" th:selected="${categoria.grupo == 'Almacenamiento'}">💾 Almacenamiento</option>
+                            <option value="Software" th:selected="${categoria.grupo == 'Software'}">🖥️ Software</option>
+                            <option value="Otros" th:selected="${categoria.grupo == 'Otros'}">📚 Otros</option>
+                        </select>
+                        <div class="form-text">Agrupa la categoría para mejor organización en el menú.</div>
+                    </div>
+                    
+                    <hr class="text-muted my-4">
+                    
+                    <div class="specs-container bg-light p-4 rounded-3 border">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h5 class="fw-bold mb-0 text-dark">Especificaciones Dinámicas</h5>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="agregarEspecificacion()">
+                                <i class="fas fa-plus me-1"></i>Agregar Campo
+                            </button>
+                        </div>
+                        <p class="text-muted small mb-4">
+                            Define qué campos de datos específicos deben completar los vendedores al publicar productos de esta categoría.
+                        </p>
+                        
+                        <div id="especificaciones-list" class="d-flex flex-column gap-3">
+                            <!-- Si hay especificaciones existentes, se renderizan aquí -->
+                            <div th:each="spec, stat : ${categoria.especificaciones}" class="spec-item shadow-sm" th:id="'spec-' + ${stat.index}">
+                                <button type="button" class="btn-close btn-remove-spec p-2" aria-label="Eliminar" th:onclick="'eliminarEspecificacion(' + ${stat.index} + ')'"></button>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Nombre del Campo <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control form-control-sm" th:name="'especificaciones[' + ${stat.index} + '].nombre'" th:value="${spec.nombre}" required>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold">Tipo <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm" th:name="'especificaciones[' + ${stat.index} + '].tipo'" required th:onchange="'tipoChanged(' + ${stat.index} + ')'">
+                                            <option value="texto" th:selected="${spec.tipo == 'texto'}">Texto</option>
+                                            <option value="numero" th:selected="${spec.tipo == 'numero'}">Número</option>
+                                            <option value="seleccion" th:selected="${spec.tipo == 'seleccion'}">Selección</option>
+                                            <option value="checkbox" th:selected="${spec.tipo == 'checkbox'}">Sí/No</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label class="form-label small fw-bold text-nowrap">¿Obligatorio?</label>
+                                        <select class="form-select form-select-sm" th:name="'especificaciones[' + ${stat.index} + '].obligatorio'">
+                                            <option value="true" th:selected="${spec.obligatorio}">Sí</option>
+                                            <option value="false" th:selected="${!spec.obligatorio}">No</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Placeholder</label>
+                                        <input type="text" class="form-control form-control-sm" th:name="'especificaciones[' + ${stat.index} + '].placeholder'" th:value="${spec.placeholder}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-bold">Unidad (Opcional)</label>
+                                        <input type="text" class="form-control form-control-sm" th:name="'especificaciones[' + ${stat.index} + '].unidad'" th:value="${spec.unidad}">
+                                    </div>
+                                </div>
+                                
+                                <div th:id="'opciones-' + ${stat.index}" th:style="${spec.tipo == 'seleccion' ? 'display: block; margin-top: 15px;' : 'display: none; margin-top: 15px;'}">
+                                    <label class="form-label small fw-bold">Opciones para Selección (separadas por comas)</label>
+                                    <textarea class="form-control form-control-sm" th:name="'especificaciones[' + ${stat.index} + '].opciones'" th:text="${spec.opciones != null ? #strings.listJoin(spec.opciones, ', ') : ''}" rows="2"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a th:href="@{/admin/categorias}" class="btn btn-light border px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+            <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com</p>
+        </div>
+    </footer>
+
+    <div th:replace="~{fragments/chat :: floating-chat}"></div>
+    
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+        .spec-item {
+            background-color: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+        }
+        .btn-remove-spec {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+    </style>
+    
+    <script th:inline="javascript">
+        // Inicializamos el index al tamaño de especificaciones que vengan del servidor
+        /*<![CDATA[*/
+        let especIndex = /*[[${categoria.especificaciones != null ? categoria.especificaciones.size() : 0}]]*/ 0;
+        /*]]>*/
+        
+        function agregarEspecificacion() {
+            const container = document.getElementById('especificaciones-list');
+            const specDiv = document.createElement('div');
+            specDiv.className = 'spec-item shadow-sm';
+            specDiv.id = `spec-${especIndex}`;
+            
+            specDiv.innerHTML = `
+                <button type="button" class="btn-close btn-remove-spec p-2" aria-label="Eliminar" onclick="eliminarEspecificacion(${especIndex})"></button>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Nombre del Campo <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control form-control-sm" name="especificaciones[${especIndex}].nombre" placeholder="Ej: Conexión" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Tipo <span class="text-danger">*</span></label>
+                        <select class="form-select form-select-sm" name="especificaciones[${especIndex}].tipo" required onchange="tipoChanged(${especIndex})">
+                            <option value="texto">Texto</option>
+                            <option value="numero">Número</option>
+                            <option value="seleccion">Selección</option>
+                            <option value="checkbox">Sí/No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-nowrap">¿Obligatorio?</label>
+                        <select class="form-select form-select-sm" name="especificaciones[${especIndex}].obligatorio">
+                            <option value="true">Sí</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Placeholder</label>
+                        <input type="text" class="form-control form-control-sm" name="especificaciones[${especIndex}].placeholder" placeholder="Ej: Bluetooth, USB-C...">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-bold">Unidad (Opcional)</label>
+                        <input type="text" class="form-control form-control-sm" name="especificaciones[${especIndex}].unidad" placeholder="GB, Hz, mAh...">
+                    </div>
+                </div>
+                
+                <div id="opciones-${especIndex}" style="display: none; margin-top: 15px;">
+                    <label class="form-label small fw-bold">Opciones para Selección (separadas por comas)</label>
+                    <textarea class="form-control form-control-sm" name="especificaciones[${especIndex}].opciones" placeholder="Bluetooth, USB, Wi-Fi" rows="2"></textarea>
+                </div>
+            `;
+            
+            container.appendChild(specDiv);
+            especIndex++;
+        }
+        
+        function tipoChanged(index) {
+            const tipo = document.querySelector(`select[name="especificaciones[${index}].tipo"]`).value;
+            const opcionesDiv = document.getElementById(`opciones-${index}`);
+            if (opcionesDiv) {
+                opcionesDiv.style.display = tipo === 'seleccion' ? 'block' : 'none';
+            }
+        }
+        
+        function eliminarEspecificacion(index) {
+            const spec = document.getElementById(`spec-${index}`);
+            if (spec) {
+                spec.remove();
+            }
+        }
+        
+        // Agregar una especificación por defecto si por alguna razón no hay ninguna.
+        window.onload = function() {
+            if (especIndex === 0) {
+                agregarEspecificacion();
+            }
+        };
+        
+        // Validación antes de enviar
+        document.getElementById('categoriaForm').addEventListener('submit', function(e) {
+            const nombre = document.getElementById('nombre').value.trim();
+            const grupo = document.getElementById('grupo').value;
+            
+            if (!nombre || !grupo) {
+                e.preventDefault();
+                alert('⚠️ Por favor completa todos los campos obligatorios');
+                return false;
+            }
+            
+            // Procesar opciones de selección
+            document.querySelectorAll('textarea[name*=".opciones"]').forEach(textarea => {
+                if (textarea.value) {
+                    const opciones = textarea.value.split(',').map(o => o.trim()).filter(o => o);
+                    textarea.value = opciones.join(',');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

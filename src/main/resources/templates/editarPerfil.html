@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Editar Perfil')}"></head>
+<style>
+    /* Definición de Variables CSS Base - seran reemplazadas por JS localstorage si existe */
+    :root {
+        --body-bg: #f8f9fa;
+        --container-bg: white;
+        --primary-btn-bg: #3498db;
+        --primary-btn-hover-bg: #2980b9;
+        --text-color-dark: #2c3e50;
+        --text-color-light: #34495e;
+        --box-shadow-color: rgba(0, 0, 0, 0.1);
+        --alert-danger-text: #721c24;
+        --form-container-bg: white;
+        --form-label-color: #34495e;
+        --preview-img-border: #eee;
+    }
+
+    body {
+        background-color: var(--body-bg);
+        font-family: 'Inter', Arial, sans-serif;
+        color: var(--text-color-light);
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+    }
+    
+    .form-container {
+        max-width: 650px;
+        margin: 40px auto;
+        background-color: var(--form-container-bg);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 8px 30px var(--box-shadow-color);
+        flex: 1;
+    }
+    
+    .form-container h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: var(--text-color-dark);
+        font-weight: 800;
+        border-bottom: 2px solid #f0f2f5;
+        padding-bottom: 15px;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--form-label-color);
+        font-size: 0.95rem;
+    }
+    
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="tel"] {
+        width: 100%;
+        padding: 12px 15px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 1rem;
+        background-color: #f8f9fa;
+        transition: all 0.3s;
+    }
+    
+    .form-group input[type="text"]:focus,
+    .form-group input[type="email"]:focus,
+    .form-group input[type="tel"]:focus {
+        background-color: #fff;
+        border-color: var(--primary-btn-bg);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+        outline: none;
+    }
+    
+    .form-group input[type="color"] {
+        width: 100%;
+        height: 60px;
+        padding: 5px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    .form-group input[type="file"] {
+        width: 100%;
+        padding: 10px 0;
+        font-size: 0.9rem;
+    }
+    
+    .preview-img {
+        max-width: 200px;
+        max-height: 200px;
+        margin-top: 15px;
+        display: block;
+        border-radius: 12px;
+        border: 2px dashed var(--preview-img-border);
+        padding: 5px;
+        object-fit: cover;
+    }
+    
+    .submit-btn {
+        display: block;
+        width: 100%;
+        padding: 15px;
+        background-color: var(--primary-btn-bg);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 15px;
+        text-align: center;
+        text-decoration: none;
+    }
+    
+    .submit-btn:hover {
+        background-color: var(--primary-btn-hover-bg);
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        color: white;
+    }
+    
+    .submit-btn.btn-secondary {
+        background-color: var(--secondary-btn-bg);
+    }
+    
+    .submit-btn.btn-secondary:hover {
+        background-color: var(--secondary-btn-hover-bg);
+    }
+    
+    .mensaje {
+        text-align: center;
+        margin-bottom: 25px;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+    
+    .color-section-title {
+        color: var(--text-color-dark);
+        font-weight: 700;
+        font-size: 1.3rem;
+        margin-top: 40px;
+        margin-bottom: 20px;
+        border-bottom: 2px solid #f0f2f5;
+        padding-bottom: 10px;
+    }
+</style>
+<body>
+
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<div class="container d-flex flex-column" style="flex:1;">
+    <div class="form-container mb-5">
+        <h2><i class="fas fa-user-edit me-2"></i>Editar Perfil</h2>
+        
+        <div th:if="${mensaje}" class="mensaje alert alert-success shadow-sm" th:text="${mensaje}"></div>
+        <div th:if="${error}" class="mensaje alert alert-danger shadow-sm" th:text="${error}"></div>
+
+        <form id="profileForm" th:action="@{/usuarios/editar-perfil}" method="post" enctype="multipart/form-data">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            
+            <h5 class="fw-bold text-muted mb-4 mt-3"><i class="fas fa-address-card me-2"></i>Información Personal</h5>
+            
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" th:value="${usuario.email}" required>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label for="departamento">Departamento</label>
+                    <input type="text" id="departamento" name="departamento" th:value="${usuario.departamento}" required>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="ciudad">Ciudad</label>
+                    <input type="text" id="ciudad" name="ciudad" th:value="${usuario.ciudad}" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono" name="telefono" th:value="${usuario.telefono}" required>
+            </div>
+            
+            <h5 class="fw-bold text-muted mb-4 mt-5"><i class="fas fa-images me-2"></i>Imágenes del Perfil</h5>
+            
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label for="imagenPerfil">Imagen de Perfil</label>
+                    <input type="file" id="imagenPerfil" name="imagenPerfil" accept="image/*">
+                    <img id="imagenPerfil-preview" class="preview-img" th:src="${usuario.imagenPerfil != null ? (usuario.imagenPerfil.startsWith('data:') ? usuario.imagenPerfil : 'data:image/jpeg;base64,' + usuario.imagenPerfil) : 'https://via.placeholder.com/200?text=Perfil'}" alt="Profile Preview">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="imagenFondo">Banner / Portada</label>
+                    <input type="file" id="imagenFondo" name="imagenFondo" accept="image/*">
+                    <img id="imagenFondo-preview" class="preview-img" style="width: 100%; object-fit: cover;" th:src="${usuario.fondoPerfil != null ? (usuario.fondoPerfil.startsWith('data:') ? usuario.fondoPerfil : 'data:image/jpeg;base64,' + usuario.fondoPerfil) : 'https://via.placeholder.com/400x200?text=Banner'}" alt="Background Preview">
+                </div>
+            </div>
+
+            <h3 class="color-section-title"><i class="fas fa-paint-roller me-2"></i>Personalizar Tema</h3>
+            <p class="text-muted small mb-4">Ajusta los colores de tu interfaz. Se guardarán en tu dispositivo.</p>
+            
+            <div class="row g-3">
+                <div class="col-md-6 form-group">
+                    <label for="color-header-bg">Fondo del Encabezado:</label>
+                    <input type="color" id="color-header-bg" value="#ffffff">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-header-text">Texto del Encabezado:</label>
+                    <input type="color" id="color-header-text" value="#2c3e50">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-body-bg">Fondo General:</label>
+                    <input type="color" id="color-body-bg" value="#f4f6f9">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-container-bg">Cajas y Contenedores:</label>
+                    <input type="color" id="color-container-bg" value="#ffffff">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-primary-btn-bg">Color Primario (Botones):</label>
+                    <input type="color" id="color-primary-btn-bg" value="#0d6efd">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-text-color-dark">Texto Principal (Títulos):</label>
+                    <input type="color" id="color-text-color-dark" value="#212529">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label for="color-text-color-light">Texto Secundario:</label>
+                    <input type="color" id="color-text-color-light" value="#6c757d">
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <button type="button" class="submit-btn shadow-sm" id="save-colors-btn"><i class="fas fa-save me-2"></i>Guardar Perfil y Apariencia</button>
+                <a th:href="@{/usuarios/perfil}" class="submit-btn btn-secondary shadow-sm"><i class="fas fa-times me-2"></i>Cancelar y Volver</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container text-center">
+        <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+        <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com | +57 3126409354</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+
+<script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        // --- PREVISUALIZACIÓN DE IMÁGENES ---
+        const imagenPerfilInput = document.getElementById('imagenPerfil');
+        const imagenPerfilPreview = document.getElementById('imagenPerfil-preview');
+        const imagenFondoInput = document.getElementById('imagenFondo');
+        const imagenFondoPreview = document.getElementById('imagenFondo-preview');
+
+        if (imagenPerfilInput && imagenPerfilPreview) {
+            imagenPerfilInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagenPerfilPreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        if (imagenFondoInput && imagenFondoPreview) {
+            imagenFondoInput.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagenFondoPreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
+
+        // --- Lógica de Personalización de Colores (Local Storage) ---
+        const colorInputs = document.querySelectorAll('input[type="color"]');
+        const saveColorsBtn = document.getElementById('save-colors-btn');
+        const profileForm = document.getElementById('profileForm');
+
+        function loadCurrentColorsIntoInputs() {
+            const savedColors = localStorage.getItem('userColors');
+            if (savedColors) {
+                const colors = JSON.parse(savedColors);
+                for (const key in colors) {
+                    if (colors.hasOwnProperty(key)) {
+                        const inputElement = document.getElementById(`color-${key}`);
+                        if (inputElement) {
+                            inputElement.value = colors[key];
+                        }
+                    }
+                }
+            }
+        }
+
+        colorInputs.forEach(input => {
+            input.addEventListener('input', (event) => {
+                const cssVarName = event.target.id.replace('color-', '--');
+                document.documentElement.style.setProperty(cssVarName, event.target.value);
+            });
+        });
+
+        saveColorsBtn.addEventListener('click', function() {
+            const colorsToSave = {
+                'header-bg': document.getElementById('color-header-bg').value,
+                'header-text': document.getElementById('color-header-text').value,
+                'body-bg': document.getElementById('color-body-bg').value,
+                'container-bg': document.getElementById('color-container-bg').value,
+                'primary-btn-bg': document.getElementById('color-primary-btn-bg').value,
+                'text-color-dark': document.getElementById('color-text-color-dark').value,
+                'text-color-light': document.getElementById('color-text-color-light').value
+            };
+            localStorage.setItem('userColors', JSON.stringify(colorsToSave));
+            profileForm.submit(); // Envía por fin el formulario con los CSRFs y formData
+        });
+
+        loadCurrentColorsIntoInputs();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="es">
+<head th:replace="~{fragments/head-config :: head-config('Gestionar Categorías - Celfinder')}"></head>
+<body>
+    <!-- Header -->
+    <div th:replace="~{fragments/header :: navbar}"></div>
+    
+    <div class="container my-5" style="flex: 1;">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="fw-bold text-dark"><i class="fas fa-tags text-primary me-3"></i>Gestión de Categorías</h1>
+            <div>
+                <a th:href="@{/admin/categorias/nueva}" class="btn btn-success fw-bold me-2"><i class="fas fa-plus me-2"></i>Nueva Categoría</a>
+                <a th:href="@{/admin}" class="btn btn-secondary fw-bold"><i class="fas fa-cog me-2"></i>Panel Admin</a>
+            </div>
+        </div>
+        
+        <!-- Alertas -->
+        <div th:if="${mensaje}" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-check-circle me-2"></i><span th:text="${mensaje}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i><span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        
+        <!-- Empty State -->
+        <div th:if="${categorias == null or categorias.isEmpty()}" class="card shadow-sm text-center p-5 border-0 rounded-4">
+            <div class="card-body">
+                <i class="fas fa-folder-open fa-4x text-muted mb-3"></i>
+                <h3 class="text-dark fw-bold">No hay categorías registradas</h3>
+                <p class="text-secondary">Crea tu primera categoría para organizar los productos.</p>
+                <a th:href="@{/admin/categorias/nueva}" class="btn btn-success fw-bold px-4 py-2 mt-3 mb-2">
+                    <i class="fas fa-plus me-2"></i>Crear Primera Categoría
+                </a>
+            </div>
+        </div>
+        
+        <!-- Tabla de Categorías -->
+        <div th:if="${categorias != null and !categorias.isEmpty()}" class="card shadow-sm border-0 rounded-4 overflow-hidden">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light text-muted">
+                        <tr>
+                            <th class="ps-4">Categoría</th>
+                            <th>Grupo</th>
+                            <th>Especificaciones</th>
+                            <th>Estado</th>
+                            <th>Creación</th>
+                            <th class="text-end pe-4">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cat : ${categorias}">
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <span th:text="${cat.icono}" class="fs-4 me-3"></span>
+                                    <strong th:text="${cat.nombre}" class="text-dark"></strong>
+                                </div>
+                            </td>
+                            <td><span class="badge bg-secondary" th:text="${cat.grupo}"></span></td>
+                            <td>
+                                <span class="badge border border-primary text-primary" th:text="${cat.especificaciones != null ? cat.especificaciones.size() : 0} + ' campos'"></span>
+                            </td>
+                            <td>
+                                <span th:if="${cat.activa}" class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Activa</span>
+                                <span th:unless="${cat.activa}" class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Inactiva</span>
+                            </td>
+                            <td class="text-muted small" th:text="${#temporals.format(cat.fechaCreacion, 'dd/MMM/yyyy')}"></td>
+                            <td class="text-end pe-4">
+                                <a th:href="@{/admin/categorias/editar/{id}(id=${cat.id})}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <form th:action="@{/admin/categorias/cambiar-estado/{id}(id=${cat.id})}" method="post" class="d-inline">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <input type="hidden" name="activa" th:value="${!cat.activa}"/>
+                                    <button type="submit" th:class="'btn btn-sm ' + (${cat.activa} ? 'btn-outline-warning' : 'btn-outline-success')" 
+                                            th:title="${cat.activa} ? 'Desactivar' : 'Activar'">
+                                        <i th:class="${cat.activa} ? 'fas fa-pause' : 'fas fa-play'"></i>
+                                    </button>
+                                </form>
+                                
+                                <form th:action="@{/admin/categorias/eliminar/{id}(id=${cat.id})}" method="post" 
+                                      class="d-inline" 
+                                      onsubmit="return confirm('¿Estás seguro de eliminar esta categoría? Esto podría afectar a los productos vinculados.');">
+                                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Info box -->
+        <div class="card shadow-sm border-0 rounded-4 mt-5 bg-light">
+            <div class="card-body p-4">
+                <h5 class="fw-bold text-dark mb-3"><i class="fas fa-info-circle text-primary me-2"></i>Cómo funcionan las categorías dinámicas</h5>
+                <ul class="text-muted mb-0 lh-lg">
+                    <li><i class="fas fa-check text-success me-2"></i>Crea categorías personalizadas para cualquier tipo de producto tecnológico.</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Define las especificaciones exactas (RAM, Almacenamiento, etc.) que los vendedores deben completar.</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Las categorías compatibles aparecerán automáticamente en el formulario de publicación de los vendedores.</li>
+                    <li><i class="fas fa-check text-success me-2"></i>Puedes desactivar categorías temporalmente usando el botón <i class="fas fa-pause text-warning"></i> sin perder sus datos.</li>
+                    <li><i class="fas fa-exclamation-circle text-danger me-2"></i>No es posible eliminar categorías si ya existen productos que dependen de ellas.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+            <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com</p>
+        </div>
+    </footer>
+
+    <div th:replace="~{fragments/chat :: floating-chat}"></div>
+    
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+    </style>
+</body>
+</html>~{fragments/chat :: floating-chat}"></div>
+</body>
+</html>

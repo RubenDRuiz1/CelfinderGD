@@ -1,0 +1,662 @@
+﻿<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu - CellFinder</title>
+    <link rel="icon" href="icono.ico" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+        .logo-container img {
+            height: 70px;
+            width: auto;
+            transition: transform 0.3s;
+        }
+        .logo-container:hover img {
+            transform: scale(1.05);
+        }
+        .menu {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+        .menu li a, .user-btn, .admin-btn {
+            color: white;
+            text-decoration: none;
+            padding: 12px 18px;
+            border-radius: 6px;
+            transition: all 0.3s;
+            font-size: 16px;
+        }
+        .menu li a:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .user-btn, .admin-btn {
+            background-color: #00000000;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .user-btn:hover {
+            background-color: #34495e;
+            transform: translateY(-2px);
+        }
+        .user-btn img {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        .admin-btn {
+            background-color: #3498db;
+        }
+        .admin-btn:hover {
+            background-color: #2980b9;
+        }
+        .user-dropdown {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 200px;
+            z-index: 1000;
+            text-align: left;
+        }
+        .user-dropdown.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        .user-dropdown a, .user-dropdown button {
+            display: block;
+            color: #2c3e50;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .user-dropdown a:hover, .user-dropdown button:hover {
+            background-color: #f0f0f0;
+        }
+        .user-dropdown button {
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: left;
+            cursor: pointer;
+        }
+        .logout-box {
+            display: none;
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            width: 300px;
+            z-index: 1001;
+            text-align: center;
+        }
+        .logout-box.visible {
+            display: block;
+            animation: fadeIn 0.3s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .logout-box p {
+            color: #2c3e50;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .logout-box button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+        .logout-box .yes-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .logout-box .yes-btn:hover {
+            background-color: #c0392b;
+        }
+        .logout-box .no-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .logout-box .no-btn:hover {
+            background-color: #2980b9;
+        }
+        body {
+            background-color: #f8f9fa;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        .menu-container {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .menu-container:first-child {
+            justify-content: center;
+            gap: 20px;
+        }
+        .menu-container:last-child {
+            justify-content: center;
+        }
+        .profile {
+            padding: 10px;
+            width: 200px;
+            text-align: center;
+            color: white;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            background-color: #2c3e50;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .profile:hover {
+            transform: scale(1.1);
+            padding: 20px;
+            width: 250px;
+            background-color: #2c3e5080;
+        }
+        .profile-img {
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .profile:hover .profile-img {
+            transform: translateY(-10px);
+        }
+        .profile#mercado:hover .profile-img {
+            content: url('logo.png');
+        }
+        .profile#solicitudes:hover .profile-img {
+            content: url('logo.png');
+        }
+
+        .profile#historial:hover .profile-img {
+            content: url('logo.png');
+        }
+
+        .profile#notificaciones:hover .profile-img {
+            content: url('logo.png');
+        }
+
+        .profile#vendedor:hover .profile-img {
+            content: url('logo.png');
+        }
+
+        .profile#hventas:hover .profile-img {
+            content: url('logo.png');
+        }
+        .profile-title {
+            font-size: 18px;
+            margin-bottom: 5px;
+            transition: opacity 0.3s ease;
+        }
+        .profile-description {
+            font-size: 14px;
+            color: white;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: opacity 0.3s ease, max-height 0.3s ease;
+            text-align: center;
+        }
+        .profile:hover .profile-description {
+            opacity: 1;
+            max-height: 100px;
+        }
+        .action-links {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .action-links a {
+            text-decoration: none;
+            color: white;
+            background-color: #3498db;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: background-color 0.3s ease;
+        }
+        .action-links a:hover {
+            background-color: #2980b9;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            background: #2c3e50;
+            color: white;
+            margin-top: 30px;
+        }
+        .footer-content p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            .menu-container {
+                justify-content: center;
+            }
+            .profile {
+                width: 180px;
+            }
+            .profile:hover {
+                width: 200px;
+                padding: 15px;
+            }
+        }
+        @media (max-width: 480px) {
+            .menu-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .profile {
+                width: 160px;
+            }
+            .profile:hover {
+                width: 180px;
+                padding: 10px;
+            }
+        }
+        #chat-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            transition: transform 0.2s;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        #chat-button:hover {
+            transform: scale(1.1);
+        }
+
+        #chat-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            user-drag: none;
+            user-select: none;
+            -moz-user-select: none;
+            -webkit-user-drag: none;
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            pointer-events: none;
+        }
+
+        #chat-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            height: 80%;
+            background-color: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            z-index: 10000;
+            overflow: hidden;
+        }
+
+        #chat-iframe-container {
+            width: 100%;
+            height: calc(100% - 40px);
+        }
+
+        #chat-iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        #close-chat {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #close-chat:hover {
+            background-color: #c82333;
+        }
+
+        #chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9998;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <img src="icons/celfinder logo nombre.png" alt="Logo CellFinder" class="logo">
+        </div>
+        <nav class="menu-container">
+            <ul class="menu">
+                <li><a href="/ventas/listar">Mercado</a></li>
+                <li th:if="${#lists.contains(userRoles, 'ROLE_ADMIN')}">
+                    <a href="/admin" class="admin-btn">Panel Admin</a>
+                </li>
+                <li class="user-menu">
+                    <button id="username-btn" class="user-btn">
+                        <img id="profile-img" src="https://via.placeholder.com/30" alt="Profile Image">
+                        <span>Cargando...</span>
+                    </button>
+                    <div class="user-dropdown" id="user-dropdown">
+                        <button  href="/usuarios/perfil">Ver Perfil</button>
+                        <button href="/ventas/notificaciones">Notificaciones</button>
+                        <button id="logout-option">Cerrar Sesión</button>
+                    </div>
+                    <div class="logout-box" id="logout-box">
+                        <p>¿Estás seguro de cerrar sesión?</p>
+                        <button class="yes-btn">Sí</button>
+                        <button class="no-btn">No</button>
+                    </div>
+                </li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="container">
+        <div class="menu-container">
+            <div class="profile" id="mercado">
+                <img src="https://github.com/Rukxxxx/recursos/blob/main/mercado%20icono.png?raw=true" alt="Usuario 4" class="profile-img" id="img3">
+                <h2 class="profile-title">MERCADO</h2>
+                <div class="profile-description">
+                    <p>Descripción del mercado</p>
+                </div>
+                <div class="action-links">
+                    <a href="/ventas/listar">VER MERCADO</a>
+                </div>
+            </div>
+            <div class="profile" id="solicitudes">
+                <img src="https://github.com/Rukxxxx/recursos/blob/main/gestion%20solicitud%20icono.png?raw=true" alt="Solicitudes" class="profile-img" id="img4">
+                <h2 class="profile-title">SOLICITUDES</h2>
+                <div class="profile-description">
+                    <p>Descripción de solicitudes</p>
+                </div>
+                <div class="action-links">
+                    <a id="solicitudesLink" href="/ventas/historial-compras"><p id="solicitudesText">VER ESTADO DE SOLICITUDES</p></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="menu-container">
+            <div class="profile" id="historial">
+                <img src="https://github.com/Rukxxxx/ccc/blob/main/historial%20logo.png?raw=true" alt="Historial Compras" class="profile-img" id="img5">
+                <h2 class="profile-title">HISTORIAL COMPRAS</h2>
+                <div class="profile-description">
+                    <p>Descripción del historial de compras</p>
+                </div>
+                <div class="action-links">
+                    <a href="/ventas/historial-compras">VER HISTORIAL</a>
+                </div>
+            </div>
+            <div class="profile" id="notificaciones">
+                <img src="https://github.com/Rukxxxx/recursos/blob/main/notificacion%20icono.png?raw=true" alt="Notificaciones" class="profile-img" id="img7">
+                <h2 class="profile-title">NOTIFICACIONES</h2>
+                <div class="profile-description">
+                    <p>Descripción de notificaciones</p>
+                </div>
+                <div class="action-links">
+                    <a href="/ventas/notificaciones">VER NOTIFICACIONES</a>
+                </div>
+            </div>
+            <div class="profile"  id="vendedor" th:if="${!#lists.contains(userRoles, 'ROLE_VENDEDOR') && !#lists.contains(userRoles, 'ROLE_ADMIN')}">
+                <img src="https://github.com/Rukxxxx/recursos/blob/main/solicitud%20vendedor%20icono.png?raw=true" alt="Solicitar Vendedor" class="profile-img" id="img8">
+                <h2 class="profile-title">SER VENDEDOR</h2>
+                <div class="profile-description">
+                    <p>Descripción de solicitar ser vendedor</p>
+                </div>
+                <div class="action-links">
+                    <a href="/admin/solicitar-vendedor">SOLICITAR</a>
+                </div>
+            </div>
+            <div class="profile" id="hventas" th:if="${#lists.contains(userRoles, 'ROLE_VENDEDOR') || #lists.contains(userRoles, 'ROLE_ADMIN')}">
+                <img src="https://github.com/Rukxxxx/ccc/blob/main/historial%20logo.png?raw=true" alt="Historial Ventas" class="profile-img" id="img6">
+                <h2 class="profile-title">HISTORIAL VENTAS</h2>
+                <div class="profile-description">
+                    <p>Descripción del historial de ventas</p>
+                </div>
+                <div class="action-links">
+                    <a href="/ventas/historial-ventas">VER HISTORIAL</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="footer-content">
+            <p>© 2025 CellFinder TechMatch</p>
+            <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+            <p>Teléfono: +57 3126409354</p>
+            <p>Email: edderespitia@gmail.com</p>
+            <p>integrantes: Edder Espitia y Ruben Ruiz</p>
+        </div>
+        <div id="chat-button">
+        <img src="https://i1.sndcdn.com/avatars-zaCUjzWzmpQ5cqzn-4EqdxQ-t1080x1080.jpg" alt="Abrir chat de asistente" draggable="false">
+    </div>
+
+
+    <div id="chat-overlay"></div>
+
+
+    <div id="chat-modal">
+        <button id="close-chat">Cerrar</button>
+        <div id="chat-iframe-container">
+            <iframe id="chat-iframe" src="asistente.html"></iframe>
+        </div>
+    </div>
+    </footer>
+
+    <script th:inline="javascript">
+        const userRoles = /*[[${userRoles}]]*/ [];
+        const isVendedorOrAdmin = userRoles.includes("ROLE_VENDEDOR") || userRoles.includes("ROLE_ADMIN");
+        const solicitudesLink = document.getElementById("solicitudesLink");
+        const solicitudesText = document.getElementById("solicitudesText");
+        if (isVendedorOrAdmin) {
+            solicitudesLink.href = "/ventas/gestionar-solicitudes";
+            solicitudesText.textContent = "GESTIONAR SOLICITUDES";
+        } else {
+            solicitudesLink.href = "/ventas/historial-compras";
+            solicitudesText.textContent = "VER ESTADO DE SOLICITUDES";
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Fetch username and profile image
+            fetch('/api/user', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const usernameBtn = document.getElementById('username-btn');
+                const profileImg = document.getElementById('profile-img');
+                usernameBtn.querySelector('span').textContent = `Bienvenido, ${data.nombreUsuario}`;
+                if (data.imgperfil) {
+                    profileImg.src = `data:image/jpeg;base64,${data.imgperfil}`;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user data:', error);
+                const usernameBtn = document.getElementById('username-btn');
+                usernameBtn.querySelector('span').textContent = 'Bienvenido, Invitado';
+            });
+
+            // User dropdown functionality
+            const usernameBtn = document.getElementById('username-btn');
+            const userDropdown = document.getElementById('user-dropdown');
+            const logoutOption = document.getElementById('logout-option');
+            const logoutBox = document.getElementById('logout-box');
+            const yesBtn = logoutBox.querySelector('.yes-btn');
+            const noBtn = logoutBox.querySelector('.no-btn');
+
+            usernameBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.toggle('visible');
+                logoutBox.classList.remove('visible');
+            });
+
+            document.addEventListener('click', function() {
+                userDropdown.classList.remove('visible');
+                logoutBox.classList.remove('visible');
+            });
+
+            userDropdown.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            logoutOption.addEventListener('click', function(e) {
+                e.stopPropagation();
+                userDropdown.classList.remove('visible');
+                logoutBox.classList.toggle('visible');
+            });
+
+            logoutBox.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+
+            yesBtn.addEventListener('click', function() {
+                window.location.href = '/logout';
+            });
+
+            noBtn.addEventListener('click', function() {
+                logoutBox.classList.remove('visible');
+            });
+        });
+        const chatButton = document.getElementById('chat-button');
+        let isDragging = false;
+        let hasMoved = false;
+        let currentX, currentY, initialX, initialY;
+
+        chatButton.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            hasMoved = false;
+            initialX = e.clientX - chatButton.getBoundingClientRect().left;
+            initialY = e.clientY - chatButton.getBoundingClientRect().top;
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        });
+
+        function drag(e) {
+            if (isDragging) {
+                e.preventDefault();
+                hasMoved = true;
+                currentX = e.clientX - initialX;
+                currentY = e.clientY - initialY;
+                chatButton.style.left = `${currentX}px`;
+                chatButton.style.right = 'auto';
+                chatButton.style.top = `${currentY}px`;
+                chatButton.style.bottom = 'auto';
+            }
+        }
+
+        function stopDrag(e) {
+            isDragging = false;
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            if (!hasMoved) {
+                openModal();
+            }
+        }
+
+        function openModal() {
+            const chatModal = document.getElementById('chat-modal');
+            const chatOverlay = document.getElementById('chat-overlay');
+            chatModal.style.display = 'block';
+            chatOverlay.style.display = 'block';
+            document.getElementById('chat-iframe').src = document.getElementById('chat-iframe').src;
+        }
+
+        const chatModal = document.getElementById('chat-modal');
+        const chatOverlay = document.getElementById('chat-overlay');
+        const closeChat = document.getElementById('close-chat');
+
+        closeChat.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+
+        chatOverlay.addEventListener('click', () => {
+            chatModal.style.display = 'none';
+            chatOverlay.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

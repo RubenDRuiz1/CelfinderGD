@@ -1,0 +1,76 @@
+<div th:fragment="floating-menu" id="celfinder-menu-container">
+    <style>
+        #celfinder-menu-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 1000;
+        }
+
+        .menu-bubble {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #e67e22, #d35400); /* Naranja vibrante para diferenciar de la IA */
+            color: white;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            text-decoration: none;
+        }
+
+        .menu-bubble:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            color: white;
+        }
+
+        .menu-bubble i {
+            transition: transform 0.3s ease;
+        }
+
+        .menu-bubble:hover i {
+            transform: scale(1.2);
+        }
+
+        /* Tooltip simple */
+        .menu-bubble::after {
+            content: "Volver al Menú";
+            position: absolute;
+            left: 70px;
+            background: #2c3e50;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .menu-bubble:hover::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .menu-bubble {
+                width: 50px;
+                height: 50px;
+                font-size: 20px;
+            }
+            .menu-bubble::after {
+                display: none;
+            }
+        }
+    </style>
+
+    <a href="/menu" class="menu-bubble" title="Volver al Menú Principal">
+        <i class="fas fa-th-large"></i>
+    </a>
+</div>

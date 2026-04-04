@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        .chat { display: flex; flex-direction: column; gap: 15px; }
+        .msg { padding: 12px 16px; border-radius: 18px; max-width: 75%; word-wrap: break-word; }
+        .user { background: #3498db; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
+        .bot { background: #e9ecef; color: #333; align-self: flex-start; border: 1px solid #ddd; }
+    </style>
+</head>
+<body>
+    <div class="chat">
+        <div class="msg bot">¡Hola! Soy <strong>Gorge Droyd</strong>. ¿En qué te ayudo?</div>
+        <div th:if="${mensaje}" class="msg user" th:text="${mensaje}"></div>
+        <div th:if="${respuesta}" class="msg bot" th:text="${respuesta}"></div>
+    </div>
+</body>
+</html>

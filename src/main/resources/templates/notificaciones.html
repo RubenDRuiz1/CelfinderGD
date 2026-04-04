@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Notificaciones')}"></head>
+<style>
+    body { background-color: #f8f9fa; display: flex; flex-direction: column; min-height: 100vh; font-family: 'Inter', Arial, sans-serif; }
+    .notif-card { border-left: 4px solid #3498db; transition: all 0.2s; }
+    .notif-card:hover { transform: translateX(4px); box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    .notif-card.no-leida { border-left-color: #e74c3c; background-color: #fff8f8; }
+    .notif-card.leida { opacity: 0.7; }
+</style>
+<body>
+
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="container" style="max-width:1000px; margin:20px auto; padding:20px; flex:1;">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="fw-bold text-primary">
+            <i class="fas fa-bell me-2"></i>Notificaciones
+        </h1>
+        <!-- Marcar todas como leídas -->
+        <form th:action="@{/api/notificaciones/marcar-todas-leidas}" method="post" class="d-inline" id="form-marcar-todas">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+            <button type="button" class="btn btn-outline-primary btn-sm" onclick="marcarTodasLeidas()">
+                <i class="fas fa-check-double me-1"></i>Marcar todas como leídas
+            </button>
+        </form>
+    </div>
+
+    <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+    <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+    <!-- Sin notificaciones -->
+    <div th:if="${notificaciones == null or notificaciones.isEmpty()}" class="text-center py-5">
+        <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+        <p class="text-muted fs-4">No tienes notificaciones.</p>
+        <a th:href="@{/ventas/listar}" class="btn btn-primary">
+            <i class="fas fa-store me-2"></i>Ir al Mercado
+        </a>
+    </div>
+
+    <!-- Lista de notificaciones -->
+    <div th:each="notificacion : ${notificaciones}" class="card mb-3 notif-card"
+         th:classappend="${notificacion.leida ? 'leida' : 'no-leida'}"
+         th:id="'notif-' + ${notificacion.id}">
+        <div class="card-body d-flex justify-content-between align-items-start">
+            <div>
+                <div class="d-flex align-items-center gap-2 mb-1">
+                    <span th:if="${notificacion.leida == false}" class="badge bg-danger">Nueva</span>
+                    <small class="text-muted">
+                        <i class="fas fa-clock me-1"></i>
+                        <span th:text="${notificacion.fecha != null ? #temporals.format(notificacion.fecha, 'dd/MM/yyyy HH:mm') : 'Fecha no disponible'}"></span>
+                    </small>
+                </div>
+                <p class="mb-0" th:text="${notificacion.mensaje}"></p>
+                <small th:if="${!#strings.isEmpty(notificacion.enlace)}" class="mt-2 d-block">
+                    <a th:href="@{${notificacion.enlace}}" class="btn btn-sm btn-outline-primary shadow-sm" style="border-radius: 20px; font-size: 0.8rem;">
+                        <i class="fas fa-link me-1"></i>Ver más detalles
+                    </a>
+                </small>
+            </div>
+            <div>
+                <button th:unless="${notificacion.leida}"
+                        class="btn btn-sm btn-outline-secondary"
+                        th:data-id="${notificacion.id}"
+                        onclick="marcarLeida(this.getAttribute('data-id'))"
+                        title="Marcar como leída">
+                    <i class="fas fa-check"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <a th:href="@{/ventas/listar}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Volver al Mercado
+        </a>
+    </div>
+</main>
+
+<footer style="text-align:center; padding:20px; background:#2c3e50; color:white; margin-top:auto;">
+    <div>
+        <p>© 2025 CellFinder TechMatch</p>
+        <p>Dirección: la universidad cedesarrollo, Cartagena bolivar</p>
+        <p>Teléfono: +57 3126409354 | Email: edderespitia@gmail.com</p>
+        <p>Integrantes: Edder Espitia y Ruben Ruiz</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+<script th:inline="javascript">
+    const csrfToken = /*[[${_csrf.token}]]*/ '';
+    const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+    function marcarLeida(id) {
+        fetch('/api/notificaciones/marcar-leida/' + id, {
+            method: 'POST',
+            headers: { [csrfHeader]: csrfToken }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                const card = document.getElementById('notif-' + id);
+                if (card) {
+                    card.classList.remove('no-leida');
+                    card.classList.add('leida');
+                    const badge = card.querySelector('.badge.bg-danger');
+                    if (badge) badge.remove();
+                    const btn = card.querySelector('button');
+                    if (btn) btn.remove();
+                }
+            }
+        }).catch(err => console.error('Error:', err));
+    }
+
+    function marcarTodasLeidas() {
+        fetch('/api/notificaciones/marcar-todas-leidas', {
+            method: 'POST',
+            headers: { [csrfHeader]: csrfToken }
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                document.querySelectorAll('.notif-card').forEach(card => {
+                    card.classList.remove('no-leida');
+                    card.classList.add('leida');
+                    const badge = card.querySelector('.badge.bg-danger');
+                    if (badge) badge.remove();
+                    const btn = card.querySelector('button');
+                    if (btn) btn.remove();
+                });
+            }
+        }).catch(err => console.error('Error:', err));
+    }
+</script>
+
+</body>
+</html>

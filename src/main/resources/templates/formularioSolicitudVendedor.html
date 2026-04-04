@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragments/head-config :: head-config('Solicitud para ser Vendedor')}"></head>
+
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="container my-5" style="max-width: 700px; flex: 1;">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4 text-center">
+                <h2 class="fw-bold text-dark mb-2"><i class="fas fa-handshake text-primary me-2"></i>Solicitud para ser Vendedor</h2>
+                <p class="text-muted small">Completa el siguiente formulario para postularte como vendedor autorizado en CellFinder.</p>
+            </div>
+            
+            <div class="card-body p-4">
+                <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+                <div th:if="${mensaje}" class="alert alert-success" th:text="${mensaje}"></div>
+
+                <form th:action="@{/admin/solicitar-vendedor}" th:object="${solicitud}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    
+                    <div class="mb-4">
+                        <label for="nombreCompleto" class="form-label fw-bold">Nombre Completo <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-user-circle text-muted"></i></span>
+                            <input type="text" class="form-control" id="nombreCompleto" th:field="*{nombreCompleto}" placeholder="Ej: Juan Pérez" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="correo" class="form-label fw-bold">Correo Electrónico <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-envelope text-muted"></i></span>
+                            <input type="email" class="form-control" id="correo" th:field="*{correo}" placeholder="ejemplo@correo.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="telefono" class="form-label fw-bold">Teléfono de Contácto (10 dígitos) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-phone-alt text-muted"></i></span>
+                            <input type="text" class="form-control" id="telefono" th:field="*{telefono}" pattern="\d{10}" placeholder="3001234567" required title="Debe contener exactamente 10 dígitos">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="direccion" class="form-label fw-bold">Dirección de Oficina o Negocio <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="fas fa-map-marker-alt text-muted"></i></span>
+                            <textarea class="form-control" id="direccion" th:field="*{direccion}" placeholder="Donde los clientes pueden encontrar tus productos o recogerlos" rows="2" required></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="motivo" class="form-label fw-bold">Motivo de la solicitud</label>
+                        <textarea class="form-control" id="motivo" th:field="*{motivo}" placeholder="Cuéntanos brevemente qué tipo de tecnología deseas vender y por qué deseas unirte a nuestra plataforma (Opcional)" rows="4"></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a th:href="@{/menu}" class="btn btn-light border px-4">Cancelar</a>
+                        <button type="submit" class="btn btn-primary px-5 fw-bold">Enviar Solicitud</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fragmento del Footer -->
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+            <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com</p>
+        </div>
+    </footer>
+
+    <div th:replace="~{fragments/chat :: floating-chat}"></div>
+    
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #f8f9fa;
+        }
+    </style>
+</body>
+</html>

@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{fragments/head-config :: head-config('Detalle del Producto')}"></head>
+<style>
+    body { background-color: #f4f6f9; font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; min-height: 100vh; }
+    .product-image-container { background: #fff; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .product-img { max-height: 450px; width: auto; max-width: 100%; object-fit: contain; transition: transform 0.4s ease; border-radius: 8px; }
+    .product-img:hover { transform: scale(1.08); }
+    .info-card { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); height: auto; min-height: 100%; }
+    
+    .price-box { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef; }
+    .original-price { text-decoration: line-through; color: #adb5bd; font-size: 1.1rem; margin-right: 10px; }
+    .final-price { font-size: 2.5rem; font-weight: 800; color: #212529; line-height: 1; }
+    .discount-badge { background: #e6fcf5; color: #0ca678; font-weight: 700; padding: 5px 10px; border-radius: 6px; font-size: 0.9rem; }
+    
+    .editable-field { display: none; }
+    .edit-mode .editable-field { display: block; width: 100%; margin-top: 5px; }
+    .edit-mode .view-field, .edit-mode .view-field-inline { display: none !important; }
+    .form-control:focus, .form-select:focus { box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25); border-color: #3498db; }
+    
+    .spec-table th { background: #f8f9fa; color: #495057; font-weight: 600; width: 40%; }
+    .spec-table td { color: #212529; }
+    
+    .btn-buy { background: #0069d9; border: none; font-weight: 700; font-size: 1.1rem; padding: 15px; border-radius: 8px; transition: all 0.3s; }
+    .btn-buy:hover { background: #0056b3; transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,105,217,0.3); }
+    .btn-buy:active { transform: translateY(0); }
+    
+    /* Similares y combos */
+    .section-title { font-weight: 800; color: #2c3e50; margin-bottom: 25px; position: relative; padding-bottom: 10px; }
+    .section-title::after { content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 50px; background: #3498db; border-radius: 3px; }
+    
+    .combo-card { border: 2px dashed #ff6b6b; border-radius: 12px; background: #fff0f0; transition: all 0.3s ease; }
+    .combo-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(255, 107, 107, 0.15); border-style: solid; }
+    
+    .similar-card { background: #fff; border-radius: 12px; transition: all 0.3s; border: 1px solid #e9ecef; }
+    .similar-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.08); border-color: #dee2e6; }
+    
+    /* Reseñas */
+    .reviews-section { background: #fff; border-radius: 16px; padding: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-top: 40px; }
+    .review-card { background: #f8f9fa; border-radius: 12px; padding: 20px; border: 1px solid #e9ecef; height: 100%; transition: all 0.3s; }
+    .review-card:hover { box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+    .stars { color: #ffc107; font-size: 1.1rem; }
+    .verified-badge { background: #ebfbee; color: #2b8a3e; font-size: 0.75rem; padding: 3px 8px; border-radius: 12px; font-weight: 600; }
+    .vote-btn { background: none; border: none; cursor: pointer; transition: all 0.2s; color: #868e96; }
+    .vote-btn:hover { color: #212529; transform: scale(1.1); }
+</style>
+<body>
+<div th:replace="~{fragments/header :: navbar}"></div>
+
+<main class="container py-5 flex-grow-1">
+    <div th:if="${error}" class="alert alert-danger shadow-sm rounded-3" th:text="${error}"></div>
+    <div th:if="${mensaje}" class="alert alert-success shadow-sm rounded-3" th:text="${mensaje}"></div>
+
+    <!-- FORMULARIO DESVINCULADO PARA AGREGAR AL CARRITO -->
+    <form id="addCartForm" th:action="@{/ventas/carrito/agregar/{id}(id=${producto.id})}" method="post">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+    </form>
+
+    <!-- FORMULARIO ENVOLBENTE PARA IN-PLACE EDITING -->
+    <form th:action="@{/ventas/editar/{id}(id=${producto.id})}" method="post" th:object="${producto}" enctype="multipart/form-data" id="editForm">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+        
+        <!-- Contenedor editable principal -->
+        <div th:classappend="${userId != null and (userId == producto.vendedorId or userRoles.contains('ROLE_ADMIN'))} ? 'editable' : ''">
+            
+            <div class="row g-4 mb-5">
+                <!-- IZQUIERDA: IMAGEN -->
+                <div class="col-lg-5">
+                    <div class="product-image-container mb-4 position-relative">
+                        <span class="view-field badge bg-secondary text-uppercase position-absolute top-0 start-0 m-4 z-1" th:text="*{estado ?: 'NUEVO'}">NUEVO</span>
+                        <img th:if="*{imagenBase64}" th:src="@{'data:image/jpeg;base64,' + *{imagenBase64}}" class="product-img" alt="Producto">
+                        <img th:unless="*{imagenBase64}" src="https://via.placeholder.com/400?text=Sin+Imagen" class="product-img" alt="Sin imagen">
+                        
+                        <div class="editable-field mt-4 text-start">
+                            <label class="form-label fw-bold text-muted small">Cambiar imagen (opcional)</label>
+                            <input type="file" class="form-control" name="nuevaImagen" accept="image/*">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- DERECHA: INFO Y COMPRA -->
+                <div class="col-lg-7">
+                    <div class="info-card">
+                        <div class="mb-2 text-muted small fw-bold">
+                            Publicado por: <span class="text-primary" th:text="${nombreVendedor} ?: 'Desconocido'"></span>
+                        </div>
+
+                        <!-- TÍTULO -->
+                        <h2 class="fw-bolder mb-3 text-dark">
+                            <span class="view-field-inline" th:text="*{nombre}"></span>
+                            <input type="text" class="form-control editable-field form-control-lg fw-bold" th:field="*{nombre}" required placeholder="Nombre del producto">
+                        </h2>
+
+                        <!-- ESTADO (Editable) -->
+                        <div class="editable-field mb-3">
+                            <label class="form-label fw-bold text-muted small">Condición física</label>
+                            <select class="form-select" th:field="*{estado}">
+                                <option value="nuevo">Nuevo</option>
+                                <option value="usado">Usado</option>
+                                <option value="reacondicionado">Reacondicionado</option>
+                            </select>
+                        </div>
+
+                        <!-- MARCA -->
+                        <div class="d-flex align-items-center mb-4 gap-2">
+                            <span class="badge bg-light text-dark border view-field-inline"><i class="fas fa-tag text-muted me-1"></i>[[*{marca ?: 'Sin marca'}]]</span>
+                            <div class="editable-field w-50">
+                                <label class="form-label fw-bold text-muted small">Marca</label>
+                                <input type="text" class="form-control form-control-sm" th:field="*{marca}" placeholder="Marca">
+                            </div>
+                        </div>
+
+                        <!-- PRECIOS Y DESCUENTOS -->
+                        <div class="price-box mb-4">
+                            <!-- VISTA -->
+                            <div class="view-field">
+                                <div th:if="${producto.descuento != null and producto.descuento > 0}">
+                                    <div class="d-flex align-items-center mb-1">
+                                        <span class="original-price" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></span>
+                                        <span class="discount-badge" th:text="${'-' + producto.descuento + '% OFF'}"></span>
+                                    </div>
+                                    <div class="final-price text-success" th:text="${'$' + #numbers.formatDecimal(producto.precioFinal != null ? producto.precioFinal : producto.precio, 0, 'COMMA', 0, 'POINT')}"></div>
+                                </div>
+                                <div th:unless="${producto.descuento != null and producto.descuento > 0}">
+                                    <div class="final-price" th:text="${'$' + #numbers.formatDecimal(producto.precio, 0, 'COMMA', 0, 'POINT')}"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- EDICIÓN -->
+                            <div class="row editable-field g-3 mt-1">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Precio Base ($)</label>
+                                    <input type="number" step="1" class="form-control" th:field="*{precio}" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted small">Descuento (%)</label>
+                                    <input type="number" class="form-control" th:field="*{descuento}" min="0" max="100">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- STOCK -->
+                        <div class="mb-4">
+                            <div class="view-field">
+                                <p class="mb-1 fw-bold text-dark"><i class="fas fa-box-open text-primary me-2"></i>Disponibilidad:</p>
+                                <h5 th:if="${producto.stock > 0}" class="text-dark fw-bold mb-0">[[${producto.stock}]] <span class="text-muted fw-normal fs-6">unidades disponibles</span></h5>
+                                <h5 th:unless="${producto.stock > 0}" class="text-danger fw-bold mb-0"><i class="fas fa-exclamation-circle me-1"></i>Producto Agotado</h5>
+                            </div>
+                            
+                            <div class="editable-field">
+                                <label class="form-label fw-bold text-muted small">Stock en inventario</label>
+                                <input type="number" class="form-control" th:field="*{stock}" required min="0">
+                            </div>
+                        </div>
+
+                        <!-- DESCRIPCIÓN -->
+                        <div class="mb-5">
+                            <h6 class="fw-bold text-dark">Descripción</h6>
+                            <p class="text-muted view-field" style="white-space: pre-wrap;" th:text="*{descripcion ?: 'Sin descripción escrita para este producto.'}"></p>
+                            <div class="editable-field">
+                                <textarea class="form-control" th:field="*{descripcion}" rows="4" placeholder="Describe tu producto..."></textarea>
+                            </div>
+                        </div>
+
+                        <!-- ACCIONES PRINCIPALES Y DE EDICIÓN -->
+                        <div class="view-field">
+                            <div class="d-grid gap-3">
+                                <div class="row g-2" th:if="${producto.stock > 0 and producto.estadoVenta != 'AGOTADO'}" th:unless="${userId != null and userId == producto.vendedorId}">
+                                    <div class="col-12">
+                                        <a th:href="@{/ventas/solicitar/{id}(id=${producto.id})}" class="btn btn-buy btn-lg w-100 text-white">
+                                           <i class="fas fa-bolt me-2"></i> Comprar Ahora
+                                        </a>
+                                    </div>
+                                </div>
+                                
+                                <div th:if="${producto.stock > 0 and producto.estadoVenta != 'AGOTADO'}" th:unless="${userId != null and userId == producto.vendedorId}" class="view-field">
+                                    <div class="m-0">
+                                        <div class="input-group input-group-lg">
+                                            <span class="input-group-text bg-white small fw-bold text-muted" style="font-size: 0.9rem;">Cant:</span>
+                                            <input type="number" form="addCartForm" name="cantidad" value="1" min="1" th:max="${producto.stock}" class="form-control text-center fw-bold" style="max-width: 80px;" required>
+                                            <button type="submit" form="addCartForm" class="btn btn-outline-primary fw-bold flex-grow-1"><i class="fas fa-cart-plus me-2"></i>Agregar al Carrito</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="button" class="btn btn-secondary btn-lg w-100 fw-bold disabled" th:if="${(producto.stock <= 0 or producto.estadoVenta == 'AGOTADO') and !(userId != null and userId == producto.vendedorId)}">
+                                    <i class="fas fa-ban me-2"></i>Agotado Temporalmente
+                                </button>
+
+                                <!-- Botones extra comprador -->
+                                <div class="d-flex gap-2 view-field" th:unless="${userId != null and userId == producto.vendedorId}">
+                                    <a th:href="@{/ventas/seleccionar-comparacion/{id}(id=${producto.id})}" class="btn btn-outline-primary flex-fill fw-bold"><i class="fas fa-balance-scale me-1"></i>Comparar</a>
+                                    <a th:href="@{/ventas/comparar-media/{id}(id=${producto.id})}" class="btn btn-outline-info flex-fill fw-bold"><i class="fas fa-chart-line me-1"></i>Mercado</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOTONES DE VENDEDOR/ADMIN -->
+                        <div class="mt-4 pt-4 border-top" th:if="${userId != null and (userId == producto.vendedorId or userRoles.contains('ROLE_ADMIN'))}">
+                            <h6 class="fw-bold mb-3 text-secondary"><i class="fas fa-cogs me-1"></i>Opciones de vendedor</h6>
+                            
+                            <button type="button" class="btn btn-warning fw-bold w-100 mb-2 view-field" id="editToggleBtn">
+                                <i class="fas fa-edit me-2"></i>Editar Producto
+                            </button>
+                            
+                            <div class="edit-controls" style="display: none;">
+                                <button type="submit" class="btn btn-success fw-bold w-100 mb-2 py-3"><i class="fas fa-save me-2"></i>Guardar Cambios</button>
+                                <button type="button" class="btn btn-outline-secondary fw-bold w-100 mb-2" id="cancelBtn"><i class="fas fa-times me-2"></i>Cancelar</button>
+                            </div>
+                            <button type="submit" th:formaction="@{/ventas/eliminar/{id}(id=${producto.id})}" class="btn btn-danger fw-bold w-100 view-field" onclick="return confirm('¿Estás seguro de eliminar este producto de forma permanente? Esta acción no se puede deshacer.')">
+                                <i class="fas fa-trash-alt me-2"></i>Eliminar Producto
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- Cierre row principal (Imagen/Info) -->
+
+            <!-- SECCIÓN SECUNDARIA: SPECS Y COMBOS SIDE-BY-SIDE -->
+            <div class="row g-4 mb-5">
+                <!-- Panel de Especificaciones -->
+                <div class="col-lg-6">
+                    <div class="info-card p-4 h-100">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-list-ul text-primary me-2"></i>Especificaciones Técnicas</h5>
+                        
+                        <div class="editable-field mb-3">
+                            <label class="form-label fw-bold text-muted small">Categoría Principal</label>
+                            <select class="form-select" th:field="*{categoria}">
+                                <option value="Celular">Celular</option>
+                                <option value="Tablet">Tablet</option>
+                                <option value="Portatil">Portátil</option>
+                                <option value="Torre">Torre</option>
+                                <option value="Lavadora">Lavadora</option>
+                                <option value="Nevera">Nevera</option>
+                                <option value="Microondas">Microondas</option>
+                                <option value="Estufa">Estufa</option>
+                                <option value="Aspiradora">Aspiradora</option>
+                            </select>
+                        </div>
+
+                        <table class="table table-bordered spec-table mb-0" th:if="${producto.especificaciones != null and !producto.especificaciones.isEmpty()}">
+                            <tbody>
+                                <tr th:each="spec : ${producto.especificaciones}">
+                                    <th th:text="${spec.key}"></th>
+                                    <td th:text="${spec.value}"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <p class="text-muted small mb-0 view-field" th:unless="${producto.especificaciones != null and !producto.especificaciones.isEmpty()}">Este producto no cuenta con especificaciones detalladas.</p>
+                    </div>
+                </div>
+
+                <!-- COMBOS -->
+                <div class="col-lg-6" th:if="${combosRecomendados != null and !combosRecomendados.isEmpty()}">
+                    <div class="info-card p-4 h-100 border-dashed" style="border: 2px dashed #ff6b6b; background: #fff0f0;">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-tags text-danger me-2"></i>Combos Recomendados</h5>
+                        <div class="row g-3">
+                            <div class="col-12" th:each="combo : ${combosRecomendados}">
+                                <div class="bg-white p-3 rounded-3 shadow-sm border">
+                                    <h6 class="fw-bold text-dark mb-1" th:text="${combo.nombre}">Combo</h6>
+                                    <p class="text-muted x-small mb-2">¡Aprovecha y ahorra!</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="text-danger fw-bolder mb-0" th:text="${'$' + #numbers.formatDecimal(combo.precioCombo, 0, 'COMMA', 0, 'POINT')}"></h5>
+                                        <a th:href="@{/ventas/combo/{id}(id=${combo.id})}" class="btn btn-sm btn-danger text-white">Ver Detalles</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+        
+        <!-- PRODUCTOS SIMILARES -->
+        <div class="row g-4 mt-2">
+
+            <!-- SIMILARES -->
+            <div class="col-12 mt-5">
+                <h3 class="section-title">Productos Similares</h3>
+                <div th:if="${similares == null or similares.empty}" class="text-center py-4 bg-white rounded-3 shadow-sm border">
+                    <i class="fas fa-box-open fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-0">No hay productos similares en este momento.</p>
+                </div>
+                <div class="row row-cols-1 row-cols-sm-2 row-cols-md-4 g-4" th:if="${similares != null and !similares.empty}">
+                    <div class="col" th:each="similar : ${similares}">
+                        <a th:href="@{/ventas/detalle/{id}(id=${similar.id})}" class="text-decoration-none">
+                            <div class="similar-card p-3 h-100 text-center d-flex flex-column">
+                                <h6 class="fw-bold text-dark text-truncate mb-2" th:text="${similar.nombre}"></h6>
+                                <span class="badge bg-light text-dark border mb-2 align-self-center" th:text="${similar.categoria}"></span>
+                                <h5 class="text-primary fw-bold mt-auto mb-0" th:text="${'$' + #numbers.formatDecimal(similar.precioFinal != null ? similar.precioFinal : similar.precio, 0, 'COMMA', 0, 'POINT')}"></h5>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESEÑAS -->
+        <div class="reviews-section border">
+            <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+                <h3 class="section-title mb-0 border-0">Reseñas de Compradores</h3>
+            </div>
+
+            <div class="row g-4" id="reviews-container">
+            </div>
+
+            <div class="text-center mt-5">
+                <button id="load-more-btn" class="btn btn-outline-primary fw-bold px-5 py-2 rounded-pill">
+                    Ver más reseñas <i class="fas fa-chevron-down ms-1"></i>
+                </button>
+                <p id="no-more-reviews" class="text-muted mt-4 font-monospace small" style="display: none;">- Fin de las reseñas -</p>
+            </div>
+
+            <!-- Formulario Nueva Reseña -->
+            <div class="mt-5 p-4 bg-light rounded-4 border" th:if="${userId != null}">
+                <h5 class="fw-bold mb-4"><i class="fas fa-edit text-primary me-2"></i>Escribe tu opinión sobre el producto</h5>
+                <form th:action="@{/ventas/reseña/{id}(id=${producto.id})}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold small text-muted">Título de la reseña</label>
+                            <input type="text" name="titulo" class="form-control bg-white border" required placeholder="Ej. Excelente pantalla y batería">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold small text-muted">Calificación</label>
+                            <select name="puntuacion" class="form-select bg-white border text-warning fw-bold" required>
+                                <option value="5">★★★★★ Excelente</option>
+                                <option value="4">★★★★☆ Muy bueno</option>
+                                <option value="3">★★★☆☆ Bueno</option>
+                                <option value="2">★★☆☆☆ Regular</option>
+                                <option value="1">★☆☆☆☆ Malo</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-muted">Detalles de tu experiencia</label>
+                            <textarea name="comentario" class="form-control bg-white border" rows="3" required placeholder="¿Qué te gustó? ¿Qué podría mejorar?"></textarea>
+                        </div>
+                        <div class="col-12 text-end mt-4">
+                            <button type="submit" class="btn btn-primary fw-bold px-4"><i class="fas fa-paper-plane me-2"></i>Publicar Reseña</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+</main>
+
+<footer class="bg-dark text-white py-4 mt-auto">
+    <div class="container text-center">
+        <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+        <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com | +57 3126409354</p>
+    </div>
+</footer>
+
+<div th:replace="~{fragments/chat :: floating-chat}"></div>
+
+<script th:inline="javascript">
+    const allReviews = /*[[${reseñas}]]*/ [];
+    const reviewsContainer = document.getElementById('reviews-container');
+    const loadMoreBtn = document.getElementById('load-more-btn');
+    const noMoreText = document.getElementById('no-more-reviews');
+    let visibleCount = 0;
+
+    function renderStars(rating) {
+        return '★'.repeat(rating) + '☆'.repeat(5 - rating);
+    }
+
+    function renderReview(review) {
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-lg-4';
+        col.innerHTML = 
+            '<div class="review-card d-flex flex-column">' +
+                '<div class="d-flex justify-content-between align-items-center mb-3">' +
+                    '<div class="d-flex align-items-center gap-2">' +
+                        '<div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;"><i class="fas fa-user text-secondary"></i></div>' +
+                        '<div>' +
+                            '<h6 class="mb-0 fw-bold fs-6 text-dark">' + (review.nombreUsuario || 'Anónimo') + '</h6>' +
+                            '<small class="text-muted" style="font-size:0.75rem">' + (review.fechaFormateada || 'Reciente') + '</small>' +
+                        '</div>' +
+                    '</div>' +
+                    (review.compradorVerificado ? '<span class="verified-badge"><i class="fas fa-check-circle me-1"></i>Verificado</span>' : '') +
+                '</div>' +
+                '<div class="mb-2"><span class="stars">' + renderStars(review.puntuacion) + '</span></div>' +
+                '<h6 class="fw-bold text-dark mb-2">' + (review.titulo || 'Sin título') + '</h6>' +
+                '<p class="flex-grow-1 text-muted small mb-3">' + (review.comentario || 'Sin comentario') + '</p>' +
+                '<div class="mt-auto pt-3 border-top d-flex justify-content-between align-items-center text-muted small">' +
+                    '<span>¿Útil?</span>' +
+                    '<div>' +
+                        '<button class="vote-btn me-3" onclick="vote(\'' + review.id + '\', true)"><i class="fas fa-thumbs-up me-1"></i>' + review.votosUtiles + '</button>' +
+                        '<button class="vote-btn" onclick="vote(\'' + review.id + '\', false)"><i class="fas fa-thumbs-down me-1"></i>' + review.votosInutiles + '</button>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+        reviewsContainer.appendChild(col);
+    }
+
+    function loadMore() {
+        const batchSize = visibleCount === 0 ? 6 : 3;
+        const next = allReviews.slice(visibleCount, visibleCount + batchSize);
+        next.forEach(renderReview);
+        visibleCount += next.length;
+
+        if (visibleCount >= allReviews.length) {
+            if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+            if(noMoreText) noMoreText.style.display = 'block';
+        }
+    }
+
+    function vote(reviewId, util) {
+        fetch('/ventas/reseña/votar/' + reviewId + '?util=' + util, { method: 'POST' })
+            .then(() => location.reload());
+    }
+
+    if (allReviews && allReviews.length > 0) {
+        loadMore();
+    } else {
+        reviewsContainer.innerHTML = '<div class="col-12 py-4 text-center"><div class="bg-light p-4 rounded-3 d-inline-block text-muted border"><i class="far fa-comment-dots fa-2x mb-2"></i><br>Sé el primero en dejar una reseña</div></div>';
+        if(loadMoreBtn) loadMoreBtn.style.display = 'none';
+    }
+
+    if(loadMoreBtn) loadMoreBtn.addEventListener('click', loadMore);
+
+    // SISTEMA DE EDICIÓN IN-PLACE
+    document.addEventListener('DOMContentLoaded', function() {
+        const editBtn = document.getElementById('editToggleBtn');
+        const container = document.querySelector('.editable');
+        const controls = document.querySelector('.edit-controls');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const viewFields = document.querySelectorAll('.view-field-inline');
+
+        if (editBtn && container) {
+            editBtn.addEventListener('click', () => {
+                const isEdit = !container.classList.contains('edit-mode');
+                container.classList.toggle('edit-mode', isEdit);
+                controls.style.display = isEdit ? 'block' : 'none';
+                editBtn.style.display = isEdit ? 'none' : 'block';
+                viewFields.forEach(f => f.style.display = isEdit ? 'none' : 'inline');
+            });
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    container.classList.remove('edit-mode');
+                    controls.style.display = 'none';
+                    editBtn.style.display = 'block';
+                    viewFields.forEach(f => f.style.display = '');
+                    document.getElementById('editForm').reset();
+                });
+            }
+        }
+    });
+</script>
+</body>
+</html>
