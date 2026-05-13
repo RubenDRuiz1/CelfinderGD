@@ -2,18 +2,280 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gorge Droyd - Asistente Celfinder</title>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        .chat { display: flex; flex-direction: column; gap: 15px; }
-        .msg { padding: 12px 16px; border-radius: 18px; max-width: 75%; word-wrap: break-word; }
-        .user { background: #3498db; color: white; align-self: flex-end; border-bottom-right-radius: 4px; }
-        .bot { background: #e9ecef; color: #333; align-self: flex-start; border: 1px solid #ddd; }
+        :root {
+            --bg-main: #0f172a;
+            --bg-sidebar: #1e293b;
+            --bg-chat: #1e293b;
+            --accent: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        body.compact .sidebar {
+            display: none;
+        }
+
+        body.compact .messages-container {
+            padding: 20px 5%;
+        }
+
+        body.compact .input-container {
+            padding: 10px 5%;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background-color: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+
+        .new-chat-btn {
+            margin: 15px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            color: var(--text-main);
+        }
+
+        .new-chat-btn:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .chat-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .chat-item {
+            padding: 10px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            transition: 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .chat-item:hover, .chat-item.active {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-main);
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .header {
+            padding: 15px 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 1.1rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 20%;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            display: flex;
+            gap: 20px;
+            max-width: 100%;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .avatar.bot { background: #10a37f; }
+        .avatar.user { background: #3b82f6; }
+
+        .content {
+            line-height: 1.6;
+            font-size: 1rem;
+            color: #d1d5db;
+        }
+
+        /* INPUT AREA */
+        .input-container {
+            padding: 20px 20%;
+            background: linear-gradient(transparent, var(--bg-main) 20%);
+        }
+
+        .input-box {
+            background: #40414f;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+        }
+
+        .input-box input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            padding: 5px;
+        }
+
+        .send-btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .send-btn:hover { background: #2563eb; }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .sidebar { width: 0; overflow: hidden; }
+            .messages-container, .input-container { padding-left: 20px; padding-right: 20px; }
+        }
     </style>
 </head>
-<body>
-    <div class="chat">
-        <div class="msg bot">¡Hola! Soy <strong>Gorge Droyd</strong>. ¿En qué te ayudo?</div>
-        <div th:if="${mensaje}" class="msg user" th:text="${mensaje}"></div>
-        <div th:if="${respuesta}" class="msg bot" th:text="${respuesta}"></div>
+<body th:classappend="${compact} ? 'compact' : ''">
+
+    <!-- Sidebar con historial -->
+    <div class="sidebar" th:if="${!compact}">
+        <a th:href="@{/asistente}" class="new-chat-btn">
+            <i data-lucide="plus"></i>
+            <span>Nuevo Chat</span>
+        </a>
+        <div class="chat-list">
+            <div th:each="h : ${misChats}">
+                <a th:href="@{/asistente(threadId=${h.id})}" 
+                   class="chat-item" 
+                   th:classappend="${h.id == threadId} ? 'active' : ''">
+                    <i data-lucide="message-square"></i>
+                    <span th:text="${h.titulo}">Nombre de la conversación</span>
+                </a>
+            </div>
+        </div>
     </div>
+
+    <!-- Contenido principal -->
+    <div class="main-content">
+        <div class="header">
+            <h1 th:text="${titulo != null ? titulo : 'Gorge Droyd'}">Gorge Droyd</h1>
+            <i data-lucide="settings" style="cursor: pointer; color: var(--text-muted)"></i>
+        </div>
+
+        <div class="messages-container" id="chatBox">
+            <!-- Mensaje inicial si no hay historial -->
+            <div th:if="${#lists.isEmpty(historial)}" class="message bot">
+                <div class="avatar bot"><i data-lucide="bot"></i></div>
+                <div class="content">
+                    ¡Hola! Soy <strong>Gorge Droyd</strong>. Estoy conectado a la base de datos de <strong>CelFinder</strong> mediante MCP.
+                    ¿En qué puedo ayudarte hoy?
+                </div>
+            </div>
+
+            <!-- Iterar historial persistente -->
+            <div th:each="m : ${historial}" class="message" th:classappend="${m.role == 'user'} ? 'user' : 'bot'">
+                <div class="avatar" th:classappend="${m.role == 'user'} ? 'user' : 'bot'">
+                    <i th:attr="data-lucide=${m.role == 'user' ? 'user' : 'bot'}"></i>
+                </div>
+                <div class="content" th:text="${m.content}">Contenido del mensaje</div>
+            </div>
+        </div>
+
+        <!-- Caja de entrada -->
+        <div class="input-container">
+            <form th:action="@{/asistente}" method="post">
+                <input type="hidden" name="threadId" th:value="${threadId}">
+                <div class="input-box">
+                    <input type="text" name="mensaje" placeholder="Pregunta algo sobre productos o gestiona pedidos..." required autocomplete="off">
+                    <button type="submit" class="send-btn">
+                        <i data-lucide="send"></i>
+                    </button>
+                </div>
+            </form>
+            <p style="text-align: center; font-size: 0.7rem; color: var(--text-muted); margin-top: 10px;">
+                Celfinder AI - Gorge Droyd (MCP Edition)
+            </p>
+        </div>
+    </div>
+
+    <script>
+        lucide.createIcons();
+        
+        // Auto scroll al final
+        const chatBox = document.getElementById('chatBox');
+        chatBox.scrollTop = chatBox.scrollHeight;
+    </script>
 </body>
 </html>
