@@ -556,7 +556,7 @@
             const enviarMensaje = () => {
                 const msg = input.value.trim();
                 if (!msg) return;
-                fetch('/asistente', {
+                fetch('/asistente?compact=true', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: 'mensaje=' + encodeURIComponent(msg)
@@ -575,7 +575,7 @@
             // CARGAR CHAT INICIAL (SOLO CUANDO SE ABRE)
             const cargarChatInicial = () => {
                 content.innerHTML = '<p>Cargando asistente...</p>';
-                fetch('/asistente')
+                fetch('/asistente?compact=true')
                     .then(r => r.text())
                     .then(html => {
                         content.innerHTML = html;

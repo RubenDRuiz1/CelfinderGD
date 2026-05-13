@@ -19,7 +19,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf
-                .ignoringRequestMatchers("/api/**", "/ventas/carrito/**", "/asistente") // Permitimos POST en carrito y asistente sin CSRF
+                .ignoringRequestMatchers("/api/**", "/ventas/carrito/**", "/asistente", "/mcp/**") // Permitimos POST en carrito, asistente y MCP sin CSRF
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED) // Permite @SessionScope
@@ -41,6 +41,9 @@ public class SecurityConfig {
                 // Rutas de Vendedor / Admin
                 .requestMatchers("/ventas/publicar", "/ventas/editar/**", "/ventas/eliminar/**").hasAnyRole("VENDEDOR", "ADMIN")
                 .requestMatchers("/ventas/gestionar-solicitudes", "/ventas/gestionar-solicitud/**", "/ventas/historial-ventas").hasAnyRole("VENDEDOR", "ADMIN")
+                
+                // Rutas del Módulo MCP (Model Context Protocol) - Solo Admin
+                .requestMatchers("/mcp/**").hasRole("ADMIN")
                 
                 // Rutas de Admin
                 .requestMatchers("/admin/**").hasRole("ADMIN")

@@ -38,6 +38,15 @@ public class AIService {
     @Value("${openrouter.model:meta-llama/llama-3.3-70b-instruct}")
     private String openRouterModel;
 
+    @Value("${deepseek.api.key:}")
+    private String deepSeekApiKey;
+
+    @Value("${deepseek.base-url:https://api.deepseek.com}")
+    private String deepSeekBaseUrl;
+
+    @Value("${deepseek.model:deepseek-chat}")
+    private String deepSeekModel;
+
     public AIService(WebClient.Builder webClientBuilder) {
         this.webClient = webClientBuilder.build();
     }
@@ -47,6 +56,8 @@ public class AIService {
         try {
             if ("openrouter".equalsIgnoreCase(llmProvider)) {
                 return callOpenRouter(prompt);
+            } else if ("deepseek".equalsIgnoreCase(llmProvider)) {
+                return callDeepSeek(prompt);
             } else {
                 return callOllama(prompt);
             }
@@ -103,6 +114,33 @@ public class AIService {
             return json.get("choices").get(0).get("message").get("content").asText();
         }
         return "Respuesta inválida de OpenRouter: " + rawResponse;
+    }
+
+    private String callDeepSeek(String prompt) throws Exception {
+        ObjectNode payload = mapper.createObjectNode();
+        payload.put("model", deepSeekModel);
+
+        ArrayNode messages = payload.putArray("messages");
+        addMessage(messages, "system", "Eres 'gorge droyd', un asistente útil de la plataforma CelFinder. Responde amablemente y en español.");
+        addMessage(messages, "user", prompt);
+
+        String rawResponse = webClient.post()
+            .uri(deepSeekBaseUrl + "/chat/completions")
+            .header("Content-Type", "application/json")
+            .header("Authorization", "Bearer " + deepSeekApiKey)
+            .bodyValue(payload.toString())
+            .retrieve()
+            .bodyToMono(String.class)
+            .block();
+
+        JsonNode json = mapper.readTree(rawResponse);
+        if (json.has("choices") && json.get("choices").size() > 0) {
+            JsonNode messageNode = json.get("choices").get(0).get("message");
+            if (messageNode != null && messageNode.has("content")) {
+                return messageNode.get("content").asText();
+            }
+        }
+        return "Respuesta inválida de DeepSeek: " + rawResponse;
     }
 
     private void addMessage(ArrayNode messages, String role, String content) {
