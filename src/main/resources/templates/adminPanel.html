@@ -141,6 +141,39 @@
                 </div>
             </div>
             
+            <div class="profile" id="mcp">
+                <i class="fas fa-terminal"></i>
+                <h2 class="profile-title">Consola MCP</h2>
+                <div class="profile-description">
+                    <p>Gestiona y consulta la base de datos MongoDB vía Model Context Protocol.</p>
+                </div>
+                <div class="action-links">
+                    <a th:href="@{/admin/mcp}" class="btn">Consola</a>
+                </div>
+            </div>
+
+            <div class="profile" id="sesiones">
+                <i class="fas fa-users-viewfinder"></i>
+                <h2 class="profile-title">Sesiones Activas</h2>
+                <div class="profile-description">
+                    <p>Monitorea usuarios conectados y genera ofertas Simplex personalizadas.</p>
+                </div>
+                <div class="action-links">
+                    <a th:href="@{/admin/sesiones-activas}" class="btn">Monitorear</a>
+                </div>
+            </div>
+
+            <div class="profile" id="simplex">
+                <i class="fas fa-brain"></i>
+                <h2 class="profile-title">MathMatch Simplex</h2>
+                <div class="profile-description">
+                    <p>Motor de optimización lineal para generar combos de descuento personalizados por usuario.</p>
+                </div>
+                <div class="action-links">
+                    <a th:href="@{/admin/sesiones-activas}" class="btn">Generar Ofertas</a>
+                </div>
+            </div>
+            
             <div class="profile" id="volver">
                 <i class="fas fa-home"></i>
                 <h2 class="profile-title">Volver al Menú</h2>

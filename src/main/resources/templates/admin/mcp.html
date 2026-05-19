@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Consola de Control MCP</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" href="https://github.com/Rukxxxx/ctm/blob/main/celfinder%20logo.png?raw=true" type="image/x-icon">
+    <style>
+        body {
+            background-color: #f0f4f8;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .mcp-header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px 20px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.08);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+        }
+        .preset-item {
+            cursor: pointer;
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .preset-item:hover {
+            background: #e6f0fa;
+            border-color: #3498db;
+            transform: translateX(5px);
+        }
+        .preset-item.active {
+            background: #3498db;
+            color: white;
+            border-color: #2980b9;
+        }
+        .preset-item.active .icon-box {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+        .icon-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #f0f4f8;
+            color: #2a5298;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+        }
+        .tool-param-field {
+            margin-bottom: 12px;
+        }
+        pre {
+            background: #1e1e1e !important;
+            color: #d4d4d4 !important;
+            padding: 15px;
+            border-radius: 10px;
+            max-height: 450px;
+            overflow-y: auto;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+        .badge-active {
+            background-color: #d1e7dd;
+            color: #0f5132;
+            border: 1px solid #badbcc;
+        }
+        .badge-inactive {
+            background-color: #f8d7da;
+            color: #842029;
+            border: 1px solid #f5c2c7;
+        }
+        .result-container {
+            border-left: 4px solid #3498db;
+            background: #ffffff;
+            border-radius: 0 10px 10px 0;
+        }
+        .tab-btn {
+            border: none;
+            background: none;
+            padding: 10px 20px;
+            font-weight: 600;
+            color: #64748b;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+    <div th:replace="~{fragments/header :: navbar}"></div>
+
+    <div class="container my-4 flex-grow-1">
+        <!-- Encabezado de la página -->
+        <div class="mcp-header text-start shadow-sm rounded-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <h1 class="fw-bold mb-1"><i class="fa-solid fa-square-poll-vertical me-2"></i>Consola Interactiva MCP</h1>
+                    <p class="text-white-50 mb-0">Model Context Protocol para consulta y gestión directa de base de datos MongoDB sin Postman.</p>
+                </div>
+                <div class="d-flex align-items-center gap-2 bg-white bg-opacity-10 p-2 rounded-3 border border-white border-opacity-10">
+                    <span class="text-white-50 small">Estado MCP:</span>
+                    <span id="mcp-status" class="status-badge badge-active"><i class="fa-solid fa-spinner fa-spin me-1"></i>Verificando...</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Columna Izquierda: Consultas Prefijadas -->
+            <div class="col-lg-4">
+                <div class="card glass-card p-4 border-0 h-100">
+                    <h4 class="fw-bold text-dark mb-3"><i class="fa-solid fa-list-check me-2 text-primary"></i>Consultas Prefijadas</h4>
+                    <p class="text-muted small mb-4">Selecciona una plantilla de consulta pre-configurada. Puedes modificar cualquier parámetro en el formulario de la derecha antes de ejecutar.</p>
+                    
+                    <div class="preset-list">
+                        <div class="preset-item active" onclick="loadPreset('stats-general', this)">
+                            <div class="icon-box"><i class="fa-solid fa-chart-line"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Estadísticas Generales</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Resumen global de ventas y catálogo</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('buscar-productos', this)">
+                            <div class="icon-box"><i class="fa-solid fa-mobile-screen-button"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Buscar Celulares Samsung</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Filtros de precio y texto en productos</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('buscar-vendedores', this)">
+                            <div class="icon-box"><i class="fa-solid fa-users-gear"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Buscar Vendedores Activos</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Filtrar cuentas por rol específico</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('contar-disponibles', this)">
+                            <div class="icon-box"><i class="fa-solid fa-calculator"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Contar Celulares Disponibles</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Conteo rápido con filtros aplicados</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('listar-categorias', this)">
+                            <div class="icon-box"><i class="fa-solid fa-tags"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Categorías y Marcas Activas</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Ver nombres únicos de productos</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('modificar-precio', this)">
+                            <div class="icon-box"><i class="fa-solid fa-pen-to-square"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Actualizar Precio Producto</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Cambiar precio o stock por ID</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('gestionar-solicitud', this)">
+                            <div class="icon-box"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Gestionar Solicitud de Venta</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Aprobar/rechazar pedido por ID</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('crear-producto', this)">
+                            <div class="icon-box"><i class="fa-solid fa-plus"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Crear Producto</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Agregar un nuevo producto al catálogo</div>
+                            </div>
+                        </div>
+                        <div class="preset-item" onclick="loadPreset('eliminar-producto', this)">
+                            <div class="icon-box"><i class="fa-solid fa-trash-can"></i></div>
+                            <div>
+                                <div class="fw-semibold small">Eliminar Producto</div>
+                                <div class="text-muted" style="font-size: 0.75rem;">Borrar un producto del catálogo por ID</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Columna Derecha: Configuración de Parámetros y Resultados -->
+            <div class="col-lg-8">
+                <div class="card glass-card p-4 border-0 mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold text-dark mb-0">
+                            <i class="fa-solid fa-sliders me-2 text-primary"></i>Configurar Parámetros de la Tool
+                        </h4>
+                        <span class="badge bg-primary px-3 py-2 rounded-3" id="current-tool-badge">estadisticasVentas</span>
+                    </div>
+
+                    <form id="mcp-form">
+                        <!-- ID del Tool (oculto) -->
+                        <input type="hidden" id="toolName" value="estadisticasVentas">
+
+                        <!-- Explicación amigable -->
+                        <div class="alert alert-light border border-info-subtle text-dark-emphasis mb-3 py-2 px-3 small d-flex align-items-center gap-2" id="tool-description-box">
+                            <i class="fa-solid fa-circle-info text-info fs-5"></i>
+                            <span id="tool-description">Genera estadísticas de ventas: totales, por categoría, por marca y productos vendidos.</span>
+                        </div>
+
+                        <!-- Campos dinámicos de parámetros -->
+                        <div id="dynamic-params-container" class="row">
+                            <!-- Los parámetros se inyectan dinámicamente mediante JS -->
+                        </div>
+
+                        <div class="mt-4 d-flex justify-content-between gap-3">
+                            <button type="button" class="btn btn-outline-secondary px-4 py-2" onclick="resetForm()">
+                                <i class="fa-solid fa-rotate-left me-2"></i>Restablecer
+                            </button>
+                            <button type="submit" class="btn btn-primary px-5 py-2 fw-bold shadow-sm" id="btn-submit">
+                                <i class="fa-solid fa-play me-2"></i>Ejecutar Consulta MCP
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Consola de Resultados -->
+                <div class="card glass-card p-4 border-0">
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
+                        <div class="d-flex gap-2">
+                            <button class="tab-btn active" id="tab-visual-btn" onclick="switchResultTab('visual')">
+                                <i class="fa-solid fa-eye me-2"></i>Vista Amigable
+                            </button>
+                            <button class="tab-btn" id="tab-raw-btn" onclick="switchResultTab('raw')">
+                                <i class="fa-solid fa-code me-2"></i>Respuesta Técnica (JSON)
+                            </button>
+                        </div>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="copyRawJson()" id="btn-copy" style="display: none;">
+                            <i class="fa-regular fa-copy me-1"></i>Copiar JSON
+                        </button>
+                    </div>
+
+                    <div id="result-visual-panel">
+                        <div class="text-center py-5 text-muted" id="placeholder-result">
+                            <i class="fa-solid fa-terminal fa-3x mb-3 text-secondary opacity-50"></i>
+                            <p class="mb-0">Los resultados de la consulta aparecerán aquí en un formato fácil de entender.</p>
+                            <p class="small text-muted">Presiona "Ejecutar Consulta MCP" para iniciar.</p>
+                        </div>
+                        <div id="rendered-content" class="p-3 result-container d-none">
+                            <!-- Aquí se inyectan tablas, tarjetas y resúmenes amigables -->
+                        </div>
+                    </div>
+
+                    <div id="result-raw-panel" class="d-none">
+                        <pre><code id="raw-json-box">{}</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-auto">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold fs-5">CellFinder TechMatch © 2025</p>
+            <p class="text-white-50 mb-0 small">Universidad Cedesarrollo, Cartagena Bolívar | edderespitia@gmail.com</p>
+        </div>
+    </footer>
+
+    <!-- Lógica Interactiva para la Consola MCP -->
+    <script th:inline="javascript">
+        // Configuración de las plantillas e inputs
+        const presets = {
+            'stats-general': {
+                toolName: 'estadisticasVentas',
+                description: 'Genera reportes de ventas, cantidad de productos y totales de marcas/categorías registradas.',
+                params: [
+                    { name: 'tipo', label: 'Tipo de Estadísticas', type: 'select', value: 'general', options: [
+                        { value: 'general', text: 'Resumen General' },
+                        { value: 'porCategoria', text: 'Productos por Categoría' },
+                        { value: 'porMarca', text: 'Productos por Marca' },
+                        { value: 'vendidos', text: 'Ranking de Productos Vendidos' }
+                    ]},
+                    { name: 'limit', label: 'Límite de Resultados', type: 'number', value: '10', placeholder: 'Por ej: 10' }
+                ]
+            },
+            'buscar-productos': {
+                toolName: 'buscarProductos',
+                description: 'Busca celulares por palabras clave, rango de precios, marca, categoría y estado de conservación.',
+                params: [
+                    { name: 'query', label: 'Texto de Búsqueda', type: 'text', value: 'samsung', placeholder: 'Palabra clave, modelo o marca' },
+                    { name: 'categoria', label: 'Categoría', type: 'text', value: 'Celular', placeholder: 'Celular, Accesorio, etc.' },
+                    { name: 'marca', label: 'Marca', type: 'text', value: 'Samsung', placeholder: 'Apple, Samsung, Motorola, etc.' },
+                    { name: 'precioMin', label: 'Precio Mínimo ($)', type: 'number', value: '100000', placeholder: 'Mínimo en pesos' },
+                    { name: 'precioMax', label: 'Precio Máximo ($)', type: 'number', value: '3000000', placeholder: 'Máximo en pesos' },
+                    { name: 'estado', label: 'Estado del Celular', type: 'select', value: 'usado', options: [
+                        { value: 'nuevo', text: 'Nuevo' },
+                        { value: 'usado', text: 'Usado/Segunda Mano' }
+                    ]},
+                    { name: 'limit', label: 'Límite resultados', type: 'number', value: '10' }
+                ]
+            },
+            'buscar-vendedores': {
+                toolName: 'buscarUsuarios',
+                description: 'Filtra las cuentas registradas en CelFinder por nombre de usuario, correo electrónico o roles.',
+                params: [
+                    { name: 'query', label: 'Nombre o Correo', type: 'text', value: '', placeholder: 'Escribe parte del correo o nombre de usuario' },
+                    { name: 'rol', label: 'Rol de la Cuenta', type: 'select', value: 'ROLE_VENDEDOR', options: [
+                        { value: 'ROLE_VENDEDOR', text: 'Vendedor' },
+                        { value: 'ROLE_ADMIN', text: 'Administrador' },
+                        { value: 'ROLE_USER', text: 'Comprador/Usuario Regular' }
+                    ]},
+                    { name: 'limit', label: 'Límite resultados', type: 'number', value: '15' }
+                ]
+            },
+            'contar-disponibles': {
+                toolName: 'contarProductos',
+                description: 'Cuenta de manera rápida la cantidad total de artículos con base en filtros seleccionados.',
+                params: [
+                    { name: 'categoria', label: 'Categoría', type: 'text', value: 'Celular', placeholder: 'Ej: Celular' },
+                    { name: 'marca', label: 'Marca', type: 'text', value: '', placeholder: 'Ej: Apple' },
+                    { name: 'estadoVenta', label: 'Estado de Venta', type: 'select', value: 'disponible', options: [
+                        { value: 'disponible', text: 'Disponible para Compra' },
+                        { value: 'vendido', text: 'Vendido' },
+                        { value: 'pendiente', text: 'Reservado/Pendiente' }
+                    ]}
+                ]
+            },
+            'listar-categorias': {
+                toolName: 'listarCategorias',
+                description: 'Lista los nombres de categorías o marcas distintas que se encuentran registradas en la base de datos.',
+                params: [
+                    { name: 'tipo', label: '¿Qué desea listar?', type: 'select', value: 'ambas', options: [
+                        { value: 'ambas', text: 'Categorías y Marcas' },
+                        { value: 'categorias', text: 'Solo Categorías' },
+                        { value: 'marcas', text: 'Solo Marcas' }
+                    ]}
+                ]
+            },
+            'modificar-precio': {
+                toolName: 'modificarProducto',
+                description: 'Herramienta de nivel administrador para modificar directamente el precio de publicación o el estado de un artículo.',
+                params: [
+                    { name: 'productoId', label: 'ID del Producto (MongoDB ID)', type: 'text', value: '', placeholder: 'Ej: 65123abcd456...' },
+                    { name: 'nuevoPrecio', label: 'Nuevo Precio ($)', type: 'number', value: '', placeholder: 'Valor en pesos colombianos' },
+                    { name: 'nuevoEstado', label: 'Nuevo Estado', type: 'select', value: 'disponible', options: [
+                        { value: 'disponible', text: 'Disponible' },
+                        { value: 'agotado', text: 'Agotado' }
+                    ]}
+                ]
+            },
+            'gestionar-solicitud': {
+                toolName: 'gestionarSolicitud',
+                description: 'Permite aprobar o rechazar directamente una orden de compra pendiente utilizando su ID único.',
+                params: [
+                    { name: 'solicitudId', label: 'ID de la Solicitud (MongoDB ID)', type: 'text', value: '', placeholder: 'Ej: 60c72b2f9b1d...' },
+                    { name: 'accion', label: 'Acción del Administrador', type: 'select', value: 'aprobar', options: [
+                        { value: 'aprobar', text: 'Aprobar Transacción' },
+                        { value: 'rechazar', text: 'Rechazar Transacción' }
+                    ]},
+                    { name: 'comentario', label: 'Comentarios o Justificación', type: 'text', value: 'Aprobado vía Consola Interactiva MCP', placeholder: 'Escribe un comentario amigable' }
+                ]
+            },
+            'crear-producto': {
+                toolName: 'crearProducto',
+                description: 'Crea un nuevo producto en el catálogo de CelFinder. Todos los campos marcados son obligatorios.',
+                params: [
+                    { name: 'nombre', label: 'Nombre del Producto', type: 'text', value: '', placeholder: 'Ej: iPhone 15 Pro Max' },
+                    { name: 'marca', label: 'Marca', type: 'text', value: '', placeholder: 'Ej: Apple' },
+                    { name: 'categoria', label: 'Categoría', type: 'text', value: 'Celular', placeholder: 'Celular, Accesorio, etc.' },
+                    { name: 'precio', label: 'Precio ($)', type: 'number', value: '', placeholder: 'Valor en pesos colombianos' },
+                    { name: 'stock', label: 'Stock', type: 'number', value: '1', placeholder: 'Cantidad disponible' },
+                    { name: 'estado', label: 'Estado del Producto', type: 'select', value: 'nuevo', options: [
+                        { value: 'nuevo', text: 'Nuevo' },
+                        { value: 'usado', text: 'Usado/Segunda Mano' }
+                    ]},
+                    { name: 'descripcion', label: 'Descripción', type: 'text', value: '', placeholder: 'Breve descripción del producto' },
+                    { name: 'vendedorId', label: 'ID del Vendedor', type: 'text', value: '', placeholder: 'ID del usuario vendedor (opcional, usa el tuyo si se omite)' }
+                ]
+            },
+            'eliminar-producto': {
+                toolName: 'eliminarProducto',
+                description: 'Elimina permanentemente un producto del catálogo usando su ID de MongoDB.',
+                params: [
+                    { name: 'productoId', label: 'ID del Producto (MongoDB ID)', type: 'text', value: '', placeholder: 'Ej: 65123abcd456...' }
+                ]
+            }
+        };
+
+        let currentResultData = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Verificar Salud del módulo MCP
+            checkMcpHealth();
+
+            // Cargar primer preset por defecto
+            loadPreset('stats-general');
+
+            // Interceptar envío del formulario
+            document.getElementById('mcp-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await executeMcpTool();
+            });
+        });
+
+        // Comprobación de salud de MCP
+        async function checkMcpHealth() {
+            const statusEl = document.getElementById('mcp-status');
+            try {
+                const res = await fetch('/mcp/health');
+                if (res.ok) {
+                    const data = await res.json();
+                    statusEl.innerHTML = `<i class="fa-solid fa-circle-check me-1"></i>Activo (UP) - ${data.toolsRegistradas} tools`;
+                    statusEl.className = "status-badge badge-active";
+                } else {
+                    statusEl.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i>Error de Módulo`;
+                    statusEl.className = "status-badge badge-inactive";
+                }
+            } catch (err) {
+                statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark me-1"></i>Desconectado`;
+                statusEl.className = "status-badge badge-inactive";
+            }
+        }
+
+        // Carga y renderizado dinámico del formulario de parámetros
+        function loadPreset(key, element) {
+            // Actualizar clases activas en la barra lateral
+            document.querySelectorAll('.preset-item').forEach(item => item.classList.remove('active'));
+            if (element) {
+                element.classList.add('active');
+            }
+
+            const preset = presets[key];
+            if (!preset) return;
+
+            document.getElementById('toolName').value = preset.toolName;
+            document.getElementById('current-tool-badge').innerText = preset.toolName;
+            document.getElementById('tool-description').innerText = preset.description;
+
+            const container = document.getElementById('dynamic-params-container');
+            container.innerHTML = '';
+
+            preset.params.forEach(param => {
+                const div = document.createElement('div');
+                div.className = 'col-md-6 tool-param-field';
+
+                let inputHtml = '';
+                if (param.type === 'select') {
+                    inputHtml = `<select class="form-select border-2" id="param-${param.name}">
+                        ${param.options.map(opt => `<option value="${opt.value}" ${opt.value === param.value ? 'selected' : ''}>${opt.text}</option>`).join('')}
+                    </select>`;
+                } else if (param.type === 'number') {
+                    inputHtml = `<input type="number" class="form-control border-2" id="param-${param.name}" value="${param.value || ''}" placeholder="${param.placeholder || ''}">`;
+                } else {
+                    inputHtml = `<input type="text" class="form-control border-2" id="param-${param.name}" value="${param.value || ''}" placeholder="${param.placeholder || ''}">`;
+                }
+
+                div.innerHTML = `
+                    <label class="form-label fw-semibold text-secondary small mb-1">${param.label}</label>
+                    ${inputHtml}
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Restablecer el formulario actual
+        function resetForm() {
+            const activePresetItem = document.querySelector('.preset-item.active');
+            if (activePresetItem) {
+                const onclickStr = activePresetItem.getAttribute('onclick');
+                const match = onclickStr.match(/'([^']+)'/);
+                if (match) loadPreset(match[1]);
+            }
+        }
+
+        // Envío de la consulta al backend
+        async function executeMcpTool() {
+            const toolName = document.getElementById('toolName').value;
+            const btn = document.getElementById('btn-submit');
+            
+            // Recopilar parámetros del formulario dinámico
+            const params = {};
+            const activePresetKey = Object.keys(presets).find(k => presets[k].toolName === toolName);
+            const preset = presets[activePresetKey];
+            
+            preset.params.forEach(p => {
+                const el = document.getElementById(`param-${p.name}`);
+                if (el && el.value.trim() !== '') {
+                    params[p.name] = el.value.trim();
+                }
+            });
+
+            // Preparar payload
+            const payload = {
+                toolName: toolName,
+                params: params
+            };
+
+            // Animación de carga
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin me-2"></i>Procesando en MongoDB...`;
+
+            try {
+                const res = await fetch('/mcp/execute', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                currentResultData = data;
+
+                // Actualizar bloques de salida
+                document.getElementById('raw-json-box').innerText = JSON.stringify(data, null, 2);
+                document.getElementById('btn-copy').style.display = 'block';
+
+                // Mostrar paneles
+                document.getElementById('placeholder-result').classList.add('d-none');
+                const contentEl = document.getElementById('rendered-content');
+                contentEl.classList.remove('d-none');
+
+                // Renderizar vista amigable de los datos
+                renderFriendlyOutput(toolName, data);
+
+            } catch (err) {
+                console.error(err);
+                document.getElementById('raw-json-box').innerText = JSON.stringify({ error: "Error de conexión con el servidor o parámetros inválidos." }, null, 2);
+                document.getElementById('placeholder-result').classList.remove('d-none');
+                document.getElementById('rendered-content').classList.add('d-none');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-play me-2"></i>Ejecutar Consulta MCP`;
+            }
+        }
+
+        // Renderizado visual y amigable del resultado JSON
+        function renderFriendlyOutput(toolName, data) {
+            const container = document.getElementById('rendered-content');
+            container.innerHTML = '';
+
+            if (!data.success) {
+                container.innerHTML = `
+                    <div class="alert alert-danger d-flex align-items-center gap-2">
+                        <i class="fa-solid fa-circle-exclamation fs-4"></i>
+                        <div>
+                            <h5 class="alert-heading fw-bold mb-0">Error al ejecutar la herramienta</h5>
+                            <p class="mb-0 small">${data.errorMessage || 'Verifica que los parámetros ingresados sean válidos.'}</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            const result = data.data;
+
+            if (toolName === 'estadisticasVentas') {
+                if (result.totalProductos !== undefined) {
+                    // Resumen general
+                    container.innerHTML = `
+                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-chart-pie me-2"></i>Resumen General de Ventas</h5>
+                        <div class="row g-3">
+                            <div class="col-6 col-md-4">
+                                <div class="p-3 border rounded text-center bg-light">
+                                    <div class="text-muted small">Total Catálogo</div>
+                                    <div class="fs-3 fw-bold text-dark">${result.totalProductos}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="p-3 border rounded text-center bg-success bg-opacity-10 text-success">
+                                    <div class="text-success-emphasis small">Productos Vendidos</div>
+                                    <div class="fs-3 fw-bold">${result.productosVendidos}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-4">
+                                <div class="p-3 border rounded text-center bg-primary bg-opacity-10 text-primary">
+                                    <div class="text-primary-emphasis small">Disponibles</div>
+                                    <div class="fs-3 fw-bold">${result.productosDisponibles}</div>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-6">
+                                <div class="p-3 border rounded text-center bg-light">
+                                    <div class="text-muted small">Categorías Activas</div>
+                                    <div class="fs-4 fw-bold text-dark">${result.totalCategorias}</div>
+                                </div>
+                            </div>
+                            <div class="col-12 col-md-6">
+                                <div class="p-3 border rounded text-center bg-light">
+                                    <div class="text-muted small">Marcas Registradas</div>
+                                    <div class="fs-4 fw-bold text-dark">${result.totalMarcas}</div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                } else if (result.agrupacion) {
+                    // Agrupado por marca o categoría
+                    const rows = result.datos.map(item => `
+                        <tr>
+                            <td class="fw-semibold text-capitalize">${item[result.agrupacion] || 'Sin especificar'}</td>
+                            <td class="text-end fw-bold text-primary">${item.total} u.</td>
+                        </tr>
+                    `).join('');
+                    container.innerHTML = `
+                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-chart-simple me-2"></i>Productos Agrupados por ${result.agrupacion === 'categoria' ? 'Categoría' : 'Marca'}</h5>
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>${result.agrupacion === 'categoria' ? 'Categoría' : 'Marca'}</th>
+                                    <th class="text-end" style="width: 150px;">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                } else if (result.productos) {
+                    // Ranking de vendidos
+                    const rows = result.productos.map((p, idx) => `
+                        <tr>
+                            <td class="text-muted fw-bold">${idx + 1}</td>
+                            <td>
+                                <div class="fw-semibold">${p.nombre}</div>
+                                <div class="text-muted small">${p.marca} | ${p.categoria}</div>
+                            </td>
+                            <td class="fw-bold text-success">$${p.precio.toLocaleString('es-CO')}</td>
+                            <td class="small text-muted">${p.vendedorId}</td>
+                        </tr>
+                    `).join('');
+                    container.innerHTML = `
+                        <h5 class="fw-bold mb-3 text-primary"><i class="fa-solid fa-trophy me-2"></i>Últimos Productos Vendidos</h5>
+                        <table class="table table-hover table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">Pos</th>
+                                    <th>Celular / Producto</th>
+                                    <th>Precio de Venta</th>
+                                    <th>Vendedor ID</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows || '<tr><td colspan="4" class="text-center">No hay productos vendidos registrados.</td></tr>'}</tbody>
+                        </table>
+                    `;
+                }
+            } else if (toolName === 'buscarProductos') {
+                const rows = result.productos.map(p => `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold text-dark">${p.nombre}</div>
+                            <div class="text-muted small">ID: ${p.id}</div>
+                        </td>
+                        <td>${p.marca}</td>
+                        <td>${p.categoria}</td>
+                        <td class="fw-bold text-primary">$${p.precio.toLocaleString('es-CO')}</td>
+                        <td><span class="badge ${p.estado === 'nuevo' ? 'bg-success' : 'bg-warning text-dark'}">${p.estado}</span></td>
+                        <td><span class="badge ${p.estadoVenta === 'disponible' ? 'bg-info text-white' : 'bg-secondary'}">${p.estadoVenta}</span></td>
+                    </tr>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+                        <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-magnifying-glass me-2"></i>Resultados de Búsqueda</h5>
+                        <span class="badge bg-secondary">${result.totalEncontrados} celulares encontrados</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre del Producto</th>
+                                    <th>Marca</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Uso</th>
+                                    <th>Venta</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows || '<tr><td colspan="6" class="text-center text-muted">Ningún producto coincide con los filtros aplicados.</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (toolName === 'buscarUsuarios') {
+                const rows = result.usuarios.map(u => `
+                    <tr>
+                        <td>
+                            <div class="fw-semibold text-dark">${u.nombreUsuario}</div>
+                            <div class="text-muted small">ID: ${u.id}</div>
+                        </td>
+                        <td>${u.email}</td>
+                        <td>
+                            ${u.roles.map(r => `<span class="badge bg-secondary me-1" style="font-size: 0.75rem;">${r.replace('ROLE_', '')}</span>`).join('')}
+                        </td>
+                        <td>${u.ciudad || 'N/A'}</td>
+                        <td><span class="badge ${u.estadoCuenta ? 'bg-success' : 'bg-danger'}">${u.estadoCuenta ? 'Activa' : 'Inactiva'}</span></td>
+                    </tr>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="fw-bold text-primary mb-0"><i class="fa-solid fa-users me-2"></i>Cuentas de Usuarios Registradas</h5>
+                        <span class="badge bg-secondary">${result.totalEncontrados} usuarios encontrados</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle small">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Nombre Usuario</th>
+                                    <th>Correo Electrónico</th>
+                                    <th>Roles asignados</th>
+                                    <th>Ciudad</th>
+                                    <th>Cuenta</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows || '<tr><td colspan="5" class="text-center text-muted">No se encontraron usuarios con los criterios especificados.</td></tr>'}</tbody>
+                        </table>
+                    </div>
+                `;
+            } else if (toolName === 'contarProductos') {
+                container.innerHTML = `
+                    <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calculator me-2"></i>Cálculo de Conteo Rápido</h5>
+                    <div class="p-4 border rounded bg-light text-center">
+                        <div class="text-muted mb-1 fs-5">Total de elementos contados</div>
+                        <div class="display-3 fw-bold text-primary">${result.total}</div>
+                        <div class="text-muted small mt-3">Filtros aplicados en MongoDB:</div>
+                        <div class="d-flex justify-content-center gap-2 flex-wrap mt-2">
+                            ${Object.keys(result.filtrosAplicados).map(k => `
+                                <span class="badge bg-secondary px-3 py-2 text-capitalize">${k}: <strong>${result.filtrosAplicados[k]}</strong></span>
+                            `).join('') || '<span class="text-muted small">Ningún filtro (conteo global)</span>'}
+                        </div>
+                    </div>
+                `;
+            } else if (toolName === 'listarCategorias') {
+                const renderBadges = (list) => {
+                    if (!list || list.length === 0) return '<p class="text-muted small">Ninguna registrada.</p>';
+                    return list.map(item => `<span class="badge bg-primary bg-opacity-10 text-primary-emphasis border border-primary-subtle px-3 py-2 me-2 mb-2 text-capitalize">${item}</span>`).join('');
+                };
+
+                container.innerHTML = `
+                    <h5 class="fw-bold text-primary mb-4"><i class="fa-solid fa-tags me-2"></i>Categorías y Marcas Registradas</h5>
+                    ${result.categorias ? `
+                        <div class="mb-4">
+                            <h6 class="fw-semibold text-secondary mb-2">Categorías Distintas (${result.totalCategorias})</h6>
+                            <div class="d-flex flex-wrap">${renderBadges(result.categorias)}</div>
+                        </div>
+                    ` : ''}
+                    ${result.marcas ? `
+                        <div>
+                            <h6 class="fw-semibold text-secondary mb-2">Marcas Distintas (${result.totalMarcas})</h6>
+                            <div class="d-flex flex-wrap">${renderBadges(result.marcas)}</div>
+                        </div>
+                    ` : ''}
+                `;
+            } else if (toolName === 'modificarProducto' || toolName === 'gestionarSolicitud') {
+                container.innerHTML = `
+                    <div class="alert alert-success d-flex align-items-center gap-3 p-4">
+                        <i class="fa-solid fa-circle-check text-success fs-1"></i>
+                        <div>
+                            <h4 class="alert-heading fw-bold mb-2">¡Acción ejecutada con éxito!</h4>
+                            <p class="mb-1">La herramienta de nivel administrador ha procesado e impactado con éxito los registros en MongoDB.</p>
+                            <hr class="my-2">
+                            <p class="mb-0 fw-semibold text-success-emphasis">Mensaje de Confirmación: "${result.mensaje || 'Se guardaron los cambios correctamente'}"</p>
+                        </div>
+                    </div>
+                `;
+            } else if (toolName === 'crearProducto') {
+                container.innerHTML = `
+                    <div class="alert alert-success d-flex align-items-center gap-3 p-4">
+                        <i class="fa-solid fa-circle-check text-success fs-1"></i>
+                        <div>
+                            <h4 class="alert-heading fw-bold mb-2">¡Producto creado exitosamente!</h4>
+                            <p class="mb-1">El producto <strong>"${result.nombre || ''}"</strong> ha sido registrado en el catálogo de CelFinder.</p>
+                            <hr class="my-2">
+                            <p class="mb-0 small text-muted">ID: ${result.id || 'N/A'} | Precio: $${result.precio ? result.precio.toLocaleString('es-CO') : 'N/A'} | Stock: ${result.stock || 0}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (toolName === 'eliminarProducto') {
+                container.innerHTML = `
+                    <div class="alert alert-danger d-flex align-items-center gap-3 p-4">
+                        <i class="fa-solid fa-trash-can text-danger fs-1"></i>
+                        <div>
+                            <h4 class="alert-heading fw-bold mb-2">Producto eliminado</h4>
+                            <p class="mb-0 fw-semibold text-danger-emphasis">${result.mensaje || 'El producto ha sido eliminado del catálogo correctamente.'}</p>
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Caída de seguridad por si no coincide
+                container.innerHTML = `
+                    <h5 class="fw-bold text-primary mb-3">Resultado de la Operación</h5>
+                    <div class="alert alert-light border p-3 small text-start">
+                        <pre style="background: transparent !important; color: #222 !important; padding: 0;">${JSON.stringify(result, null, 2)}</pre>
+                    </div>
+                `;
+            }
+        }
+
+        // Cambio de pestañas en los resultados (Amigable vs JSON)
+        function switchResultTab(tab) {
+            const visBtn = document.getElementById('tab-visual-btn');
+            const rawBtn = document.getElementById('tab-raw-btn');
+            const visPanel = document.getElementById('result-visual-panel');
+            const rawPanel = document.getElementById('result-raw-panel');
+
+            if (tab === 'visual') {
+                visBtn.classList.add('active');
+                rawBtn.classList.remove('active');
+                visPanel.classList.remove('d-none');
+                rawPanel.classList.add('d-none');
+            } else {
+                visBtn.classList.remove('active');
+                rawBtn.classList.add('active');
+                visPanel.classList.add('d-none');
+                rawPanel.classList.remove('d-none');
+            }
+        }
+
+        // Copiar JSON al portapapeles
+        function copyRawJson() {
+            if (!currentResultData) return;
+            const text = JSON.stringify(currentResultData, null, 2);
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = document.getElementById('btn-copy');
+                btn.innerHTML = `<i class="fa-solid fa-check text-success me-1"></i>¡Copiado!`;
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-regular fa-copy me-1"></i>Copiar JSON`;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
